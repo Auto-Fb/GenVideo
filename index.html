@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="color-scheme" content="dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Sports News Video Generator · 15s</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{
+    font-family:system-ui,-apple-system,sans-serif;
+    background:#0a0a0f;color:#fff;
+    padding:12px;
+    padding-top:calc(12px + env(safe-area-inset-top));
+    padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    padding-left:calc(12px + env(safe-area-inset-left));
+    padding-right:calc(12px + env(safe-area-inset-right));
+    min-height:100vh;min-height:100dvh;
+    -webkit-text-size-adjust:100%;
+  }
+  .container{max-width:1400px;margin:0 auto;min-width:0;overflow-x:clip}
+  h1{font-size:18px;margin-bottom:12px;line-height:1.3}
+  h1 .grad{
+    background:linear-gradient(90deg,#FF3B30,#FFD60A);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+  .panel{background:#16161f;border-radius:12px;padding:14px;margin-bottom:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+  button{
+    background:linear-gradient(135deg,#FF3B30,#FF9500);
+    color:#fff;border:0;padding:14px 20px;border-radius:10px;
+    font-weight:700;cursor:pointer;font-size:15px;
+    transition:transform .15s;min-height:48px;
+    flex:1 1 auto;white-space:nowrap;touch-action:manipulation;
+  }
+  @media(hover:hover){button:hover:not(:disabled){transform:translateY(-2px)}}
+  button:active:not(:disabled){transform:scale(0.97)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.sec{background:#2a2a3a}
+
+  input[type=file]{
+    color:#fff;font-size:14px;width:100%;
+    padding:10px;background:#0f0f18;border-radius:8px;border:1px dashed #2a2a3a;
+  }
+  input[type=file]::file-selector-button{
+    background:#2a2a3a;color:#fff;border:0;padding:8px 14px;border-radius:6px;
+    font-weight:600;margin-right:10px;cursor:pointer;
+  }
+
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:8px 6px;text-align:left;border-bottom:1px solid #2a2a3a;white-space:nowrap}
+  td.wrap{white-space:normal;min-width:130px}
+  th{color:#888;font-weight:600;position:sticky;top:0;background:#16161f;z-index:2}
+
+  .videos{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));
+    gap:10px;margin-top:10px;max-height:60vh;overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .video-card{background:#0f0f18;border-radius:8px;padding:8px;min-width:0}
+  .b64-card textarea{width:100%;height:70px;background:#07070d;color:#9fe8b0;border:1px solid #2a2a3a;border-radius:6px;padding:6px;font-family:monospace;font-size:10px;resize:vertical;margin-top:6px;box-sizing:border-box}
+  .b64-card .meta{font-size:11px;color:#9aa;margin-top:4px;word-break:break-all}
+  .b64-actions{display:flex;gap:6px;margin-top:6px}
+  .b64-actions button{flex:1;min-height:40px;padding:8px;font-size:12px}
+  .video-card video{width:100%;border-radius:6px;display:block;aspect-ratio:9/16;background:#000}
+  .video-card a{
+    color:#FFD60A;font-size:11px;text-decoration:none;
+    display:block;margin-top:6px;word-break:break-all;line-height:1.3;
+  }
+
+  #canvas{
+    width:min(100%,calc(78vh*9/16));width:min(100%,calc(78dvh*9/16));height:auto;aspect-ratio:9/16;
+    background:#000;border-radius:10px;border:2px solid #2a2a3a;
+    display:block;margin:0 auto;
+    box-shadow:0 0 30px rgba(255,59,48,0.15);
+  }
+
+  .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
+  .layout>*,.col-left,.col-right,.panel{min-width:0;max-width:100%}
+  @media(max-width:899px){
+    .col-right{display:contents}
+    .panel-controls{order:1}
+    .col-left{order:2}
+    .panel-videos{order:3}
+    .panel-data{order:4}
+    .layout{gap:0}
+    .videos{max-height:none;overflow:visible}
+    .table-wrap{max-height:50vh}
+  }
+  @media(min-width:900px){
+    .layout{grid-template-columns:320px minmax(0,1fr)}
+    h1{font-size:24px}
+    body{padding:20px}
+    button{flex:0 1 auto;font-size:14px;padding:12px 22px;min-height:auto}
+    .videos{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+    table{font-size:13px}
+  }
+
+  .done-head{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+  .done-head button{flex:1 1 140px;min-height:40px;padding:8px;font-size:12px}
+  .done-item{display:flex;align-items:center;gap:6px;background:#0f0f18;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;flex-wrap:wrap}
+  .done-item .nm{flex:1 1 140px;min-width:0;word-break:break-all}
+  .done-item button{min-height:34px;padding:4px 10px;font-size:12px;flex:0 0 auto}
+  .done-item video{width:100%;max-width:220px;aspect-ratio:9/16;border-radius:6px;background:#000}
+  #resumeBar{margin-bottom:12px;border:1px solid #FFD60A}
+  body.genning #canvas{position:absolute!important;width:2px!important;height:2px!important;opacity:0!important;pointer-events:none}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+  .chip{min-width:26px;padding:3px 6px;border-radius:6px;background:#2a2a3a;color:#889;font-size:11px;text-align:center}
+  .chip.run{background:#FFD60A;color:#000;font-weight:700;animation:pulse 1s infinite}
+  .chip.ok{background:#1f8f4a;color:#fff}
+  .chip.err{background:#FF3B30;color:#fff}
+  .chip.up{background:#0ea5e9;color:#fff}
+  .chip.warn{background:#f59e0b;color:#000;font-weight:700}
+  @keyframes pulse{50%{opacity:.55}}
+  .progress{height:8px;background:#2a2a3a;border-radius:4px;overflow:hidden;margin-top:10px}
+  .progress-bar{height:100%;background:linear-gradient(90deg,#FF3B30,#FFD60A);width:0%;transition:width .3s}
+  .status{font-size:13px;color:#aaa;margin-top:8px;line-height:1.4;word-break:break-word}
+  label.chk{
+    font-size:13px;display:flex;gap:6px;align-items:center;
+    cursor:pointer;padding:8px 0;user-select:none;
+  }
+  label.chk input{width:18px;height:18px;accent-color:#FF3B30}
+
+  .table-wrap{
+    max-height:40vh;overflow:auto;border-radius:8px;
+    -webkit-overflow-scrolling:touch;
+    background:#0f0f18;
+  }
+  .table-wrap::-webkit-scrollbar{width:6px;height:6px}
+  .table-wrap::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:3px}
+  td.roll{cursor:pointer;color:#FFD60A;text-decoration:underline dotted;user-select:none}
+  td.roll:active{opacity:.6}
+  tr[data-i]{cursor:pointer}
+  tr[data-i].sel td{background:rgba(255,214,10,.14)}
+  tr[data-i].sel td:first-child{box-shadow:inset 4px 0 0 #FFD60A}
+
+  /* KV PANEL */
+  .kv-panel{margin-top:6px;padding:10px;background:#0f0f18;border-radius:8px;border:1px solid #2a2a3a}
+  .kv-panel input{width:100%;padding:8px;border-radius:6px;border:1px solid #2a2a3a;background:#16161f;color:#fff;font-size:12px;font-family:monospace;margin-top:6px}
+  .kv-btn{margin-top:6px;margin-right:6px;padding:8px 14px;border-radius:8px;border:1px solid #2a2a3a;background:#23233a;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+  .kv-del{background:#3a2323}
+  .kv-ok{font-size:12px;color:#6ee7b7;margin-top:6px}
+  .kv-ok span{color:#888;font-family:monospace}
+  .kv-panel #kvStat{font-size:11px;color:#6ee7b7;margin-top:6px;font-family:monospace;min-height:14px;word-break:break-word}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><span>🏆</span> <span class="grad">Sports News Video Generator · 15s</span></h1>
+
+  <div class="panel">
+    <div class="row" style="flex-direction:column;align-items:stretch;">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+      <button id="loadBtn" disabled>📥 Load Excel</button>
+    </div>
+    <div class="status" id="status">Pilih file JadwalCoy.xlsx dulu bos.</div>
+  </div>
+
+  <div class="layout">
+    <div class="col-left">
+      <div class="panel">
+        <h3 style="font-size:13px;margin-bottom:10px;">📺 Preview</h3>
+        <canvas id="canvas"></canvas>
+        <div class="status" id="previewLabel" style="text-align:center"></div>
+      </div>
+    </div>
+
+    <div class="col-right">
+      <div class="panel panel-controls">
+        <div class="row" style="justify-content:space-between;gap:8px;">
+          <button id="genOne" disabled style="flex:1;">▶ Test video ini</button>
+          <button id="genAll" class="sec" disabled style="flex:1;">🎬 Gen All</button>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <label class="chk"><input type="checkbox" id="addAudio" checked> Beat audio</label>
+          <button id="shuffle" class="sec" disabled style="flex:0 0 auto;min-height:40px;padding:8px 14px;font-size:13px">🔀 Acak ulang</button>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <select id="tplSelect" style="flex:1 1 140px;min-height:40px;background:#0f0f18;color:#fff;border:1px solid #2a2a3a;border-radius:8px;padding:8px;font-size:14px"></select>
+          <label class="chk"><input type="checkbox" id="randBg" checked> Latar acak</label>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <select id="ctaSelect" style="flex:1 1 100%;min-height:40px;background:#0f0f18;color:#fff;border:1px solid #2a2a3a;border-radius:8px;padding:8px;font-size:14px">
+            <option value="all">🌐 Universal: FB · TikTok · IG</option>
+            <option value="fb">📘 Facebook: LINK IN CAPTION</option>
+            <option value="ig">📷 Instagram / TikTok: LINK IN BIO</option>
+            <option value="none">Tanpa teks ajakan</option>
+          </select>
+        </div>
+        <div class="row">
+          <label class="chk"><input type="checkbox" id="safeZone" checked> Safe zone (teks tidak tertutup tombol &amp; caption)</label>
+        </div>
+        <div class="kv-panel">
+          <label class="chk" style="padding:0"><input type="checkbox" id="autoKV" checked> <b>☁️ Auto-upload ke Worker KV</b></label>
+          <div id="kvForm">
+            <input id="kvUrl" type="password" placeholder="Worker URL" autocomplete="off" spellcheck="false">
+            <input id="kvToken" type="password" placeholder="Token / Password" autocomplete="off" spellcheck="false">
+            <button type="button" id="kvSave" class="kv-btn">💾 Simpan</button>
+          </div>
+          <div id="kvSaved" style="display:none">
+            <div class="kv-ok">🔒 Worker &amp; token tersimpan (tersembunyi) <span id="kvMask"></span></div>
+            <button type="button" id="kvEdit" class="kv-btn">✏️ Ubah</button>
+            <button type="button" id="kvClear" class="kv-btn kv-del">🗑️ Hapus</button>
+          </div>
+          <select id="kvFmt" style="width:100%;margin-top:6px;padding:8px;border-radius:6px;border:1px solid #2a2a3a;background:#16161f;color:#fff;font-size:12px">
+            <option value="mp4">Kirim MP4 mentah (binary)</option>
+            <option value="b64">Kirim base64 teks (Worker lama)</option>
+          </select>
+          <div id="kvStat"></div>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <select id="palSelect" style="flex:1 1 100%;min-height:40px;background:#0f0f18;color:#fff;border:1px solid #2a2a3a;border-radius:8px;padding:8px;font-size:14px"></select>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <button id="rollTpl" class="sec" style="min-height:40px;padding:8px 14px;font-size:13px">🔄 Roll Template</button>
+          <button id="rollBg" class="sec" style="min-height:40px;padding:8px 14px;font-size:13px">🔄 Roll Latar</button>
+          <button id="rollPal" class="sec" style="min-height:40px;padding:8px 14px;font-size:13px">🎨 Roll Warna</button>
+          <button id="swapTB" class="sec" style="min-height:40px;padding:8px 14px;font-size:13px">↔ Tukar</button>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <label class="chk"><input type="checkbox" id="dropPast" checked> Buang jadwal yang tanggalnya sudah lewat</label>
+        </div>
+        <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="status" id="status2"></div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="panel panel-data">
+        <h3 style="font-size:13px;margin-bottom:8px;">📋 Data (<span id="rowCount">0</span> baris)</h3>
+        <div class="table-wrap">
+          <table id="dataTable">
+            <thead><tr><th>#</th><th>State</th><th>Sport</th><th>Matchup</th><th>Jadwal</th><th>Template 🔄</th><th>Latar 🔄</th><th>Warna 🔄</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel panel-videos">
+        <h3 style="font-size:13px;margin-bottom:8px;">🎥 Hasil Video</h3>
+        <div id="doneList"></div>
+        <div class="videos" id="videos"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@4.3.0/build/mp4-muxer.js"></script>
+<script>
+// ==================== CONFIG ====================
+const W = 1080, H = 1920, FPS = 30, DUR = 15;
+const COVER_FRAMES = 1;   // v6: jumlah frame awal video yang dibuat jadi 'cover' (tim vs tim) -> dipakai FB sbg thumbnail
+
+const canvas = document.getElementById('canvas');
+canvas.width = W; canvas.height = H;
+const ctx = canvas.getContext('2d');
+
+let rows = [];
+let genAllRunning = false;
+const rowKey = r => [r.state, r.sport, r.homeTeam, r.awayTeam, r.date, r.time].join('|');
+const doneMeta = new Map();
+let previewData = null;
+let selIdx = 0;
+let previewStart = performance.now();
+let recording = false;
+
+const SPORT_THEME = {
+  'Football':   { primary:'#FF3B30', accent:'#FFD60A', icon:'🏈', bg:'#1a0505' },
+  'Soccer':     { primary:'#34C759', accent:'#FFFFFF', icon:'⚽', bg:'#051a08' },
+  'Volleyball': { primary:'#FF9500', accent:'#FFFFFF', icon:'🏐', bg:'#1a0f05' },
+  'Water Polo': { primary:'#0A84FF', accent:'#FFFFFF', icon:'🤽', bg:'#05101a' },
+  'Basketball': { primary:'#FF6B00', accent:'#FFFFFF', icon:'🏀', bg:'#1a0d05' },
+};
+
+// ==================== LOAD EXCEL ====================
+const fileInput = document.getElementById('fileInput');
+const loadBtn = document.getElementById('loadBtn');
+
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+fileInput.addEventListener('change', e => {
+  loadBtn.disabled = !e.target.files[0];
+  if (e.target.files[0]) loadExcel();
+});
+loadBtn.addEventListener('click', loadExcel);
+
+function loadExcel() {
+  const file = fileInput.files[0];
+  if (!file) return;
+  if (typeof XLSX === 'undefined') {
+    document.getElementById('status').textContent = '❌ Library XLSX gagal dimuat. Cek koneksi internet lalu refresh.';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onerror = () => { document.getElementById('status').textContent = '❌ Gagal membaca file.'; };
+  reader.onload = ev => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      rows = json.map(parseRow).filter(r => r && r.homeTeam);
+      const dropped = pruneExpired();
+      const nodate = rows.filter(r => !gameDate(r)).length;
+      assignTemplates();
+      document.getElementById('shuffle').disabled = !rows.length;
+
+      document.getElementById('rowCount').textContent = rows.length;
+      document.getElementById('genOne').disabled = !rows.length;
+      document.getElementById('genAll').disabled = !rows.length;
+      const baseMsg = `✓ ${rows.length} baris dimuat.` +
+        (dropped ? ` 🗑 ${dropped} baris sudah lewat tanggal → dibuang.` : '') +
+        (nodate ? ` ⚠ ${nodate} baris tanggal tidak terbaca (tetap dipakai).` : '');
+      document.getElementById('status').textContent = baseMsg;
+      renderTable();
+      if (rows.length) { selIdx = 0; setPreview(0, false); }
+      const rb = document.getElementById('resumeBar'); if (rb) rb.remove();
+      saveSession();
+      refreshDone().then(() => {
+        renderTable(); renderDoneList();
+        if (doneMeta.size) document.getElementById('status').textContent =
+          baseMsg + ` 💾 ${doneMeta.size} video sudah tersimpan — Gen All akan lanjut sisanya.`;
+      });
+    } catch (err) {
+      document.getElementById('status').textContent = '❌ Error: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ==================== PARSE ROW ====================
+function parseRow(row) {
+  const title = String(row.state_schedule_title || '');
+  const m = title.match(/^(.+?)\s+High School\s+(.+?)\s+Schedule/i);
+  const state = m ? m[1].trim() : '';
+  const sport = m ? m[2].trim() : String(row.sport1 || '').trim();
+
+  const desc = String(row.game_description || '');
+  const dateMatch = desc.match(/on\s+(\w+),\s+(\w+\s+\d+)\s+@\s+([\d:]+\s*[ap]?m?)/i);
+  const day  = dateMatch ? dateMatch[1] : '';
+  const date = dateMatch ? dateMatch[2] : '';
+  const time = dateMatch ? dateMatch[3].replace(/\s+/g,'').toUpperCase().replace(/([AP])M?$/,'$1M') : '';
+
+  const locMatch = desc.match(/\(([^)]+)\)/);
+  const location = locMatch ? locMatch[1] : '';
+
+  return {
+    title, state, sport,
+    homeTeam: String(row.home_team || '').trim(),
+    homeNick: String(row.home_nickname || '').trim(),
+    awayTeam: String(row.away_team || '').trim(),
+    awayNick: String(row.away_nickname || '').trim(),
+    day, date, time, location,
+    hashtags: String(row.hashtag_line || '').split(/\s+/).filter(Boolean),
+    watchLabel: String(row.watch_label || 'WATCH HERE').trim(),
+    watchLink: String(row.watch_link || '').trim(),
+  };
+}
+
+function renderTable() {
+  const tb = document.querySelector('#dataTable tbody');
+  if (selIdx >= rows.length) selIdx = 0;
+  tb.innerHTML = rows.map((r, i) => `
+    <tr data-i="${i}" class="${i === selIdx ? 'sel' : ''}">
+      <td>${doneMeta.has(rowKey(r)) ? '✓ ' : ''}${i+1}</td>
+      <td>${esc(r.state)}</td>
+      <td>${esc(r.sport)}</td>
+      <td class="wrap">${esc(r.homeTeam)} vs ${esc(r.awayTeam)}</td>
+      <td>${esc(r.day)} ${esc(r.date)} · ${esc(r.time)}</td>
+      <td class="roll" data-roll="tpl" data-i="${i}">${esc((TEMPLATES[r.tpl]||{}).label)}</td>
+      <td class="roll" data-roll="bg" data-i="${i}">${esc(BG_LABEL[r.bgKey]||'')}</td>
+      <td class="roll" data-roll="pal" data-i="${i}">${esc((PALETTES[r.pal]||{}).label||'Sesuai olahraga')}</td>
+    </tr>`).join('');
+}
+
+// ==================== DRAW HELPERS ====================
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function fitFont(text, weight, maxSize, minSize, maxWidth, family='Arial') {
+  let size = maxSize;
+  ctx.font = `${weight} ${size}px ${family}`;
+  while (ctx.measureText(text).width > maxWidth && size > minSize) {
+    size -= 2;
+    ctx.font = `${weight} ${size}px ${family}`;
+  }
+  return size;
+}
+const clamp01 = t => Math.max(0, Math.min(1, t));
+const easeOut = t => 1 - Math.pow(1-t, 3);
+
+// ==================== TEMPLATES ====================
+const ph = (name, start, end) => ({ name, start, end });
+const TEMPLATES = {
+  classic:    { label:'Classic',    phases:[ph('intro',0,1.5), ph('matchup',1.5,5.5), ph('details',5.5,10), ph('hashtags',10,12.5), ph('cta',12.5,15)] },
+  flash:      { label:'Flash',      phases:[ph('flashTeams',0,5), ph('flashInfo',5,9.5), ph('ticker',9.5,12), ph('cta',12,15)] },
+  scoreboard: { label:'Scoreboard', phases:[ph('scoreboard',0,10), ph('hashtags',10,12.5), ph('cta',12.5,15)] },
+  poster:     { label:'Poster',     phases:[ph('poster',0,12.5), ph('cta',12.5,15)] },
+};
+const DRAWERS = { intro:drawIntro, matchup:drawMatchup, details:drawDetails, hashtags:drawHashtags,
+                  cta:drawCTA, scoreboard:drawScoreboard, poster:drawPoster,
+                  flashTeams:drawFlashTeams, flashInfo:drawFlashInfo, ticker:drawTicker };
+
+const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; };
+
+function bgFlash(t, th) {
+  ctx.fillStyle = '#07070b'; ctx.fillRect(0, 0, W, H);
+  const off = (t * 240) % 600, skew = H * 0.35;
+  for (let i = -2; i < 6; i++) {
+    const x = i * 300 + off - 300;
+    ctx.fillStyle = i % 2 ? hexA(th.primary, 0.28) : hexA(th.primary, 0.85);
+    ctx.beginPath();
+    ctx.moveTo(x, 0); ctx.lineTo(x + 150, 0);
+    ctx.lineTo(x + 150 - skew, H); ctx.lineTo(x - skew, H);
+    ctx.closePath(); ctx.fill();
+  }
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(0,0,0,0.35)'); g.addColorStop(0.5, 'rgba(0,0,0,0.6)'); g.addColorStop(1, 'rgba(0,0,0,0.85)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+
+function bgScoreboard(t, th) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#04060c'); g.addColorStop(0.6, '#0a1020'); g.addColorStop(1, th.bg);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  [200, 540, 880].forEach((x, i) => {
+    const sway = Math.sin(t * 0.9 + i * 2) * 120;
+    const c = ctx.createLinearGradient(x, 0, x + sway, H * 0.75);
+    c.addColorStop(0, 'rgba(255,255,255,0.22)'); c.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = c;
+    ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x + 30, 0);
+    ctx.lineTo(x + sway + 260, H * 0.75); ctx.lineTo(x + sway - 260, H * 0.75);
+    ctx.closePath(); ctx.fill();
+  });
+  ctx.strokeStyle = hexA(th.primary, 0.35); ctx.lineWidth = 3;
+  const hy = H * 0.62;
+  for (let i = 0; i < 9; i++) {
+    const y = hy + Math.pow(i / 8, 2) * (H - hy);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  for (let i = -6; i <= 6; i++) {
+    ctx.beginPath(); ctx.moveTo(W/2 + i * 40, hy); ctx.lineTo(W/2 + i * 260, H); ctx.stroke();
+  }
+}
+
+function bgPoster(t, th) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, th.primary); g.addColorStop(0.55, hexA(th.primary, 0.35)); g.addColorStop(1, '#000');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const drift = (t * 20) % 60;
+  for (let y = -60; y < H + 60; y += 60) {
+    const r = 3 + 14 * clamp01(y / H);
+    for (let x = -60; x < W + 60; x += 60) {
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.beginPath(); ctx.arc(x + drift + ((y / 60) % 2) * 30, y + drift, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+
+const BG = { classic: bgClassic, flash: bgFlash, scoreboard: bgScoreboard, poster: bgPoster };
+function drawBackground(t, theme, key) { (BG[key] || bgClassic)(t, theme); }
+
+function flashPlate(y, dir, name, nick, s, theme) {
+  const x = dir * -W * (1 - s), h = 300, sk = 70;
+  ctx.save(); ctx.translate(x, 0);
+  ctx.fillStyle = 'rgba(0,0,0,0.82)';
+  ctx.beginPath(); ctx.moveTo(-100, y - h/2); ctx.lineTo(W + 100 - sk, y - h/2);
+  ctx.lineTo(W + 100, y + h/2); ctx.lineTo(-100 + sk, y + h/2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = theme.accent;
+  const ex = dir > 0 ? 0 : W - 24; ctx.fillRect(ex, y - h/2, 24, h);
+  ctx.textAlign = dir > 0 ? 'left' : 'right'; ctx.textBaseline = 'middle';
+  const tx = dir > 0 ? 70 : W - 70;
+  ctx.fillStyle = '#fff'; fitFont((name||'').toUpperCase(), 'italic 900', 110, 40, W - 200);
+  ctx.fillText((name||'').toUpperCase(), tx, y - 40);
+  ctx.fillStyle = theme.accent; fitFont('"' + (nick||'') + '"', 'italic bold', 58, 28, W - 200);
+  ctx.fillText('"' + (nick||'') + '"', tx, y + 75);
+  ctx.restore();
+}
+
+function drawFlashTeams(t, d, theme) {
+  const s = easeOut(clamp01(t * 2.2));
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'italic 900 420px Arial'; ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.strokeText('VS', W/2, 960);
+  ctx.restore();
+  flashPlate(620, 1, d.homeTeam, d.homeNick, s, theme);
+  flashPlate(1300, -1, d.awayTeam, d.awayNick, easeOut(clamp01((t - 0.15) * 2.2)), theme);
+}
+
+function drawFlashInfo(t, d, theme) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const pop = easeOut(clamp01(t * 3));
+  ctx.save(); ctx.translate(W/2, 700); ctx.scale(0.6 + 0.4 * pop, 0.6 + 0.4 * pop); ctx.globalAlpha *= pop;
+  const tm = (d.time||'').toUpperCase();
+  fitFont(tm, 'italic 900', 380, 120, W - 120);
+  ctx.lineWidth = 10; ctx.strokeStyle = '#000'; ctx.strokeText(tm, 0, 0);
+  ctx.fillStyle = '#fff'; ctx.fillText(tm, 0, 0);
+  ctx.restore();
+
+  const b = easeOut(clamp01((t - 0.2) * 3));
+  ctx.save(); ctx.globalAlpha *= b;
+  ctx.fillStyle = theme.accent; ctx.beginPath();
+  ctx.moveTo(100, 960); ctx.lineTo(W - 60, 960); ctx.lineTo(W - 100, 1100); ctx.lineTo(60, 1100); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#000';
+  const dd = ((d.day||'') + ' ' + (d.date||'')).toUpperCase();
+  fitFont(dd, 'italic 900', 84, 36, W - 260); ctx.fillText(dd, W/2, 1030);
+  ctx.restore();
+
+  const c = easeOut(clamp01((t - 0.4) * 3));
+  ctx.save(); ctx.globalAlpha *= c;
+  ctx.fillStyle = 'rgba(0,0,0,0.8)'; roundRect(70, 1200, W - 140, 140, 70); ctx.fill();
+  ctx.fillStyle = '#fff';
+  const lc = '📍 ' + (d.location||'').toUpperCase();
+  fitFont(lc, 'bold', 52, 22, W - 260); ctx.fillText(lc, W/2, 1270);
+  ctx.restore();
+}
+
+function drawTicker(t, d, theme) {
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  const tags = (d.hashtags && d.hashtags.length ? d.hashtags : ['#HighSchoolSports']).slice(0, 6);
+  const txt = tags.join('   ✦   ') + '   ✦   ';
+  ctx.font = 'italic 900 56px Arial';
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.fillText('🔥 TRENDING NOW', W/2, 560);
+  ctx.textAlign = 'left';
+  for (let r = 0; r < 4; r++) {
+    const y = 760 + r * 190, dir = r % 2 ? 1 : -1;
+    ctx.fillStyle = r % 2 ? 'rgba(0,0,0,0.85)' : theme.primary;
+    ctx.fillRect(0, y - 80, W, 160);
+    ctx.fillStyle = r % 2 ? theme.accent : '#fff';
+    ctx.font = 'italic 900 96px Arial';
+    const w = ctx.measureText(txt).width;
+    const off = ((t * 12.5 * 140 * dir) % w + w) % w;
+    for (let x = -off - (dir > 0 ? 0 : 0); x < W; x += w) ctx.fillText(txt, x, y);
+  }
+}
+
+function textLine(txt, y, weight, size, min, color, alpha, x = W/2) {
+  ctx.save();
+  ctx.globalAlpha *= alpha;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = color;
+  fitFont(txt, weight, size, min, W - 160);
+  ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+
+function drawScoreboard(t, d, theme) {
+  const sec = t * 8;
+  const rv = k => easeOut(clamp01((sec - k * 0.6) * 1.5));
+  textLine('GAME DAY', 330, 'bold', 52, 30, theme.accent, rv(0));
+
+  const block = (name, nick, y, dir, k) => {
+    const s = rv(k);
+    ctx.save();
+    ctx.translate(dir * -W * (1 - s), 0);
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    roundRect(60, y - 130, 960, 260, 24); ctx.fill();
+    ctx.fillStyle = theme.primary;
+    ctx.fillRect(60, y - 130, 16, 260);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(dir * -W * (1 - s), 0);
+    textLine((name||'').toUpperCase(), y - 30, 'bold', 80, 36, '#fff', 1);
+    textLine('"' + (nick||'') + '"', y + 60, 'italic bold', 48, 26, theme.accent, 1);
+    ctx.restore();
+  };
+  block(d.homeTeam, d.homeNick, 560, 1, 1);
+
+  const mid = rv(2);
+  ctx.save(); ctx.globalAlpha *= mid; ctx.translate(W/2, 960);
+  ctx.fillStyle = theme.primary;
+  roundRect(-260, -110, 520, 220, 30); ctx.fill();
+  ctx.restore();
+  textLine((d.time||'').toUpperCase(), 940, 'bold', 110, 50, '#fff', mid);
+  textLine('VS', 1030, 'bold', 44, 30, 'rgba(255,255,255,0.8)', mid);
+
+  block(d.awayTeam, d.awayNick, 1360, -1, 3);
+
+  textLine(((d.day||'') + ' ' + (d.date||'')).toUpperCase(), 1580, 'bold', 56, 30, '#fff', rv(4));
+  textLine('📍 ' + (d.location||'').toUpperCase(), 1660, 'bold', 40, 22, '#aaa', rv(5));
+}
+
+function drawPoster(t, d, theme) {
+  const sec = t * 12.5;
+  const rv = k => easeOut(clamp01((sec - k * 0.35) * 2));
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  roundRect(60, 200, 960, 1500, 36); ctx.fill();
+  ctx.strokeStyle = theme.primary; ctx.lineWidth = 6;
+  roundRect(60, 200, 960, 1500, 36); ctx.stroke();
+  ctx.restore();
+
+  textLine(theme.icon + ' ' + (d.sport||'').toUpperCase(), 330, 'bold', 84, 40, '#fff', rv(0));
+  textLine((d.state||'').toUpperCase() + ' HIGH SCHOOL', 420, 'bold', 40, 24, theme.accent, rv(1));
+  ctx.fillStyle = theme.primary; ctx.fillRect(180, 490, 720, 6);
+
+  textLine((d.homeTeam||'').toUpperCase(), 620, 'bold', 76, 34, '#fff', rv(2));
+  textLine('VS', 730, 'bold', 56, 30, theme.primary, rv(3));
+  textLine((d.awayTeam||'').toUpperCase(), 840, 'bold', 76, 34, '#fff', rv(4));
+  ctx.fillStyle = theme.primary; ctx.fillRect(180, 930, 720, 6);
+
+  textLine((d.day||'').toUpperCase() + ' · ' + (d.date||'').toUpperCase(), 1040, 'bold', 64, 30, theme.accent, rv(5));
+  textLine((d.time||'').toUpperCase(), 1180, 'bold', 150, 60, '#fff', rv(6));
+  textLine('📍 ' + (d.location||'').toUpperCase(), 1310, 'bold', 44, 22, '#aaa', rv(7));
+
+  const tags = (d.hashtags || []).slice(0, 3).join('  ');
+  textLine(tags, 1500, 'bold', 52, 24, theme.primary, rv(8));
+}
+
+// v6: frame pertama video selalu kosong (fade-in dari 0) -> thumbnail FB cuma background polos.
+// Cover = tampilan "tim vs tim" yang sudah penuh (fase yang menampilkan tim, alpha 1) untuk frame awal.
+const COVER_BY_TPL = {
+  classic:['matchup', 0.97], flash:['flashTeams', 0.9], scoreboard:['scoreboard', 0.5], poster:['poster', 0.5],
+  neon:['neonVS', 0.9], burst:['burstTeams', 0.9], ticket:['ticket', 0.5], wave:['waveFacts', 0.17]
+};
+function drawFrame(t, d, cover) {
+  const tplKey = TEMPLATES[d.tpl] ? d.tpl : 'classic';
+  const tpl = TEMPLATES[tplKey];
+  if (cover) {
+    const c = COVER_BY_TPL[tplKey];
+    const cp = c && tpl.phases.find(x => x.name === c[0]);
+    if (cp) t = cp.start + c[1] * (cp.end - cp.start); else cover = false;
+  }
+  t = Math.min(t, DUR - 0.001);
+  const theme = getTheme(d);
+  drawBackground(t, theme, d.bgKey || d.tpl);
+  let phase = tpl.phases[0];
+  for (const p of tpl.phases) if (t >= p.start && t < p.end) phase = p;
+  const localT = clamp01((t - phase.start) / (phase.end - phase.start));
+  const fadeIn  = clamp01((t - phase.start) / 0.3);
+  const fadeOut = 1 - clamp01((t - (phase.end - 0.3)) / 0.3);
+  const alpha   = cover ? 1 : Math.min(fadeIn, fadeOut);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if (safeChk.checked) {
+    ctx.translate(W/2, 260); ctx.scale(0.86, 0.86); ctx.translate(-W/2, -260);
+  }
+  DRAWERS[phase.name](phase.name === 'intro' ? t : localT, d, theme);
+  ctx.restore();
+  drawBars(t, d, theme);
+  drawInfoChip(t, d, theme);
+}
+
+function drawInfoChip(t, d, th) {
+  const dt = (d.date || '').split(/\s+/);
+  const parts = [(d.day || '').slice(0, 3).toUpperCase(), (dt[0] || '').slice(0, 3).toUpperCase() + (dt[1] ? ' ' + dt[1] : ''), (d.time || '').toUpperCase()]
+    .map(x => x.trim()).filter(Boolean);
+  if (!parts.length) return;
+  const cy = safeChk.checked ? 150 : 128;
+  const txt = parts.join('  ·  ');
+  ctx.save();
+  ctx.globalAlpha = clamp01((t - 0.3) / 0.4);
+  ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = Math.min(W - 120, ctx.measureText(txt).width + 90);
+  ctx.fillStyle = 'rgba(0,0,0,0.78)'; roundRect(W/2 - w/2, cy, w, 64, 32); ctx.fill();
+  ctx.strokeStyle = th.accent; ctx.lineWidth = 3; roundRect(W/2 - w/2, cy, w, 64, 32); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillText(txt, W/2, cy + 33);
+  ctx.restore();
+}
+
+function bgClassic(t, theme) {
+  const g = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, H);
+  g.addColorStop(0, theme.bg);
+  g.addColorStop(1, '#000');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = theme.primary + '22';
+  ctx.lineWidth = 2;
+  const offset = (t * 80) % 100;
+  for (let i = -H; i < W + H; i += 100) {
+    ctx.beginPath();
+    ctx.moveTo(i + offset, 0);
+    ctx.lineTo(i + offset - H, H);
+    ctx.stroke();
+  }
+  const v = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.8);
+  v.addColorStop(0, 'rgba(0,0,0,0)');
+  v.addColorStop(1, 'rgba(0,0,0,0.7)');
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawBars(t, d, theme) {
+  const k = d.tpl || 'classic';
+  const st = (d.state || '').toUpperCase();
+  ctx.textBaseline = 'middle';
+
+  if (['neon','burst','ticket','wave'].includes(k)) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(0, 0, W, 90); ctx.fillRect(0, H - 70, W, 70);
+    ctx.fillStyle = k === 'neon' ? theme.accent : theme.primary;
+    ctx.fillRect(0, 90, W, 4); ctx.fillRect(0, H - 74, W, 4);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 30px Arial';
+    ctx.fillText('SPORTS FUSION  ·  ' + st, W/2, 46);
+    ctx.fillStyle = '#bbb'; ctx.font = 'bold 24px Arial';
+    ctx.fillText('LIVE • HIGH SCHOOL SPORTS', W/2, H - 36);
+    return;
+  }
+  if (k === 'poster') {
+    ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = 'bold 30px Arial';
+    ctx.fillText('SPORTS FUSION  ·  ' + st, W/2, 90);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = 'bold 24px Arial';
+    ctx.fillText('LIVE • HIGH SCHOOL SPORTS', W/2, H - 60);
+    return;
+  }
+  if (k === 'flash') {
+    ctx.fillStyle = theme.primary; ctx.fillRect(0, 0, W, 100);
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 100, W, 6);
+    ctx.fillStyle = '#fff'; ctx.font = 'italic 900 38px Arial';
+    ctx.textAlign = 'left';  ctx.fillText('⚡ SPORTS FUSION', 40, 52);
+    ctx.textAlign = 'right'; ctx.fillText(st, W - 40, 52);
+    ctx.fillStyle = '#000'; ctx.fillRect(0, H - 80, W, 80);
+    ctx.fillStyle = theme.primary; ctx.fillRect(0, H - 80, W, 6);
+    ctx.fillStyle = theme.accent; ctx.font = 'italic bold 26px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('LIVE • HIGH SCHOOL SPORTS', W/2, H - 38);
+    return;
+  }
+  if (k === 'scoreboard') {
+    ctx.fillStyle = '#05070d'; ctx.fillRect(0, 0, W, 110);
+    ctx.fillStyle = theme.accent; ctx.fillRect(0, 110, W, 4);
+    ctx.font = 'bold 34px "Courier New", monospace';
+    ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText('■ SPORTS FUSION', 40, 56);
+    ctx.textAlign = 'right'; ctx.fillStyle = theme.accent; ctx.fillText(st, W - 40, 56);
+    ctx.fillStyle = '#05070d'; ctx.fillRect(0, H - 90, W, 90);
+    ctx.fillStyle = theme.accent; ctx.fillRect(0, H - 94, W, 4);
+    ctx.font = 'bold 28px "Courier New", monospace'; ctx.textAlign = 'center';
+    ctx.fillStyle = theme.accent; ctx.fillText('● LIVE  HIGH SCHOOL SPORTS', W/2, H - 45);
+    return;
+  }
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, W, 100);
+  ctx.fillStyle = theme.primary;
+  ctx.fillRect(0, 96, W, 4);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 32px Arial';
+  ctx.textAlign = 'left';
+  ctx.fillText('● SPORTS FUSION', 40, 50);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = theme.accent;
+  ctx.fillText(st, W - 40, 50);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, H - 80, W, 80);
+  ctx.fillStyle = theme.primary;
+  ctx.fillRect(0, H - 84, W, 4);
+  ctx.fillStyle = '#aaa';
+  ctx.font = 'bold 24px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('LIVE • HIGH SCHOOL SPORTS', W/2, H - 40);
+}
+
+function drawIntro(t, d, theme) {
+  const pulse = 0.5 + 0.5 * Math.sin(t * 6);
+  ctx.save();
+  ctx.translate(W/2, 400);
+  ctx.fillStyle = theme.primary;
+  ctx.shadowColor = theme.primary;
+  ctx.shadowBlur = 30 * pulse;
+  roundRect(-200, -45, 400, 90, 12); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 56px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('BREAKING', 0, 0);
+  ctx.restore();
+  ctx.font = '200px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(theme.icon, W/2, 850);
+  ctx.fillStyle = '#fff';
+  const sportTxt = (d.sport || '').toUpperCase();
+  fitFont(sportTxt, 'bold', 100, 40, W - 80);
+  ctx.fillText(sportTxt, W/2, 1150);
+  ctx.fillStyle = theme.accent;
+  const stateTxt = (d.state || '').toUpperCase() + ' HS';
+  fitFont(stateTxt, 'bold', 56, 28, W - 80);
+  ctx.fillText(stateTxt, W/2, 1260);
+}
+
+function drawMatchup(t, d, theme) {
+  const s = easeOut(t);
+  const homeX = -W * (1 - s);
+  const awayX =  W * (1 - s);
+  ctx.save();
+  ctx.translate(W/2, H/2);
+  const vsScale = easeOut(clamp01(t * 1.5));
+  ctx.scale(vsScale, vsScale);
+  ctx.fillStyle = theme.primary;
+  ctx.shadowColor = theme.primary;
+  ctx.shadowBlur = 40;
+  ctx.beginPath(); ctx.arc(0, 0, 130, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 100px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('VS', 0, 0);
+  ctx.restore();
+  ctx.save(); ctx.translate(W/2 + homeX, H/2 - 350); drawTeamBlock(d.homeTeam, d.homeNick, theme, 1); ctx.restore();
+  ctx.save(); ctx.translate(W/2 + awayX, H/2 + 350); drawTeamBlock(d.awayTeam, d.awayNick, theme, -1); ctx.restore();
+}
+
+function drawTeamBlock(team, nick, theme, dir) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  let size = 90;
+  ctx.font = `bold ${size}px Arial`;
+  while (ctx.measureText((team||'').toUpperCase()).width > W - 80 && size > 40) {
+    size -= 4;
+    ctx.font = `bold ${size}px Arial`;
+  }
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = '#000'; ctx.shadowBlur = 10;
+  ctx.fillText((team||'').toUpperCase(), 0, 0);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = theme.accent;
+  const nickTxt = '"' + (nick||'') + '"';
+  fitFont(nickTxt, 'italic bold', 56, 28, W - 80);
+  ctx.fillText(nickTxt, 0, dir * 90);
+  ctx.fillStyle = theme.primary;
+  ctx.fillRect(-250, dir * 130, 500, 6);
+}
+
+function drawDetails(t, d, theme) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = theme.accent;
+  ctx.font = 'bold 48px Arial';
+  ctx.fillText('MATCH DETAILS', W/2, 500);
+  const s1 = easeOut(clamp01(t*2));
+  ctx.save(); ctx.globalAlpha = s1; ctx.translate(W/2, 680);
+  ctx.fillStyle = '#fff';
+  const dayTxt = (d.day||'').toUpperCase();
+  fitFont(dayTxt, 'bold', 140, 60, W - 80);
+  ctx.fillText(dayTxt, 0, 0); ctx.restore();
+  const s2 = easeOut(clamp01((t-0.2)*2));
+  ctx.save(); ctx.globalAlpha = s2; ctx.translate(W/2, 830);
+  ctx.fillStyle = theme.primary;
+  const dateTxt = (d.date||'').toUpperCase();
+  fitFont(dateTxt, 'bold', 100, 50, W - 80);
+  ctx.fillText(dateTxt, 0, 0); ctx.restore();
+  const s3 = easeOut(clamp01((t-0.4)*2));
+  ctx.save(); ctx.globalAlpha = s3; ctx.translate(W/2, 1030);
+  ctx.fillStyle = theme.primary;
+  roundRect(-180, -60, 360, 120, 20); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 80px Arial';
+  ctx.fillText((d.time||'').toUpperCase(), 0, 0); ctx.restore();
+  const s4 = easeOut(clamp01((t-0.6)*2));
+  ctx.save(); ctx.globalAlpha = s4; ctx.translate(W/2, 1250);
+  ctx.fillStyle = '#aaa'; ctx.font = '32px Arial';
+  ctx.fillText('📍 LOCATION', 0, -50);
+  ctx.fillStyle = '#fff';
+  const locTxt = (d.location||'').toUpperCase();
+  fitFont(locTxt, 'bold', 52, 24, W - 80);
+  ctx.fillText(locTxt, 0, 30); ctx.restore();
+}
+
+function drawHashtags(t, d, theme) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = theme.accent; ctx.font = 'bold 56px Arial';
+  ctx.fillText('TRENDING NOW', W/2, 500);
+  const tags = d.hashtags.slice(0, 6);
+  const startY = 720, spacing = 130;
+  tags.forEach((tag, i) => {
+    const appear = clamp01((t - i * 0.12) * 3);
+    const s = easeOut(appear);
+    ctx.save();
+    ctx.translate(W/2, startY + i * spacing);
+    ctx.scale(s, s);
+    ctx.globalAlpha = appear;
+    ctx.fillStyle = i % 2 === 0 ? theme.primary : theme.accent;
+    fitFont(tag, 'bold', 72, 28, W - 80);
+    ctx.shadowColor = theme.primary; ctx.shadowBlur = 20;
+    ctx.fillText(tag, 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  });
+}
+
+const safeChk = document.getElementById('safeZone');
+const CTA_OPTS = { all:'🔗 LINK IN CAPTION / BIO', fb:'👇 LINK IN CAPTION', ig:'👆 TAP LINK IN BIO', none:'' };
+function drawCTA(t, d, theme) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const pulse = 0.5 + 0.5 * Math.sin(t * 8);
+  const s = 1 + 0.05 * pulse * easeOut(clamp01(t*2));
+  ctx.save();
+  ctx.translate(W/2, H/2 - 150);
+  ctx.scale(s, s);
+  ctx.fillStyle = theme.primary;
+  ctx.shadowColor = theme.primary; ctx.shadowBlur = 50;
+  roundRect(-400, -100, 800, 200, 30); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff';
+  fitFont('▶ ' + (d.watchLabel || 'WATCH HERE'), 'bold', 90, 36, 740);
+  ctx.fillText('▶ ' + (d.watchLabel || 'WATCH HERE'), 0, 0);
+  ctx.restore();
+  let linkSize = 52;
+  ctx.font = `bold ${linkSize}px Arial`;
+  while (ctx.measureText(d.watchLink || '').width > W - 80 && linkSize > 22) {
+    linkSize -= 2;
+    ctx.font = `bold ${linkSize}px Arial`;
+  }
+  ctx.fillStyle = theme.accent;
+  ctx.fillText(d.watchLink || '', W/2, H/2 + 120);
+  const sel = document.getElementById('ctaSelect').value;
+  const hint = sel in CTA_OPTS ? CTA_OPTS[sel] : CTA_OPTS.all;
+  if (hint) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    roundRect(W/2 - 280, H/2 + 200, 560, 80, 20); ctx.fill();
+    ctx.fillStyle = '#fff';
+    fitFont(hint, 'bold', 38, 22, 500);
+    ctx.fillText(hint, W/2, H/2 + 240);
+  }
+}
+
+const BG_KEYS = ['classic','flash','scoreboard','poster','neon','burst','stadium','wave','sport'];
+const BG_LABEL = { classic:'Diagonal', flash:'Strobe', scoreboard:'Lampu Stadion', poster:'Halftone',
+                   neon:'Neon Grid', burst:'Sunburst', stadium:'Tribun Penonton', wave:'Gelombang', ticket:'Tribun Penonton', sport:'Lapangan' };
+
+function floatingIcons(t, th, alpha) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let i = 0; i < 10; i++) {
+    const x = (i * 97 + 60) % W, sp = 60 + (i % 4) * 30;
+    const y = H + 100 - ((t * sp + i * 220) % (H + 200)), sz = 60 + (i % 3) * 30;
+    ctx.font = sz + 'px Arial';
+    ctx.fillText(th.icon, x + Math.sin(t + i) * 30, y);
+  }
+  ctx.restore();
+}
+
+function bgNeon(t, th) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#0b0221'); g.addColorStop(0.55, '#1a0640'); g.addColorStop(1, '#000');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const sy = H * 0.5;
+  const sg = ctx.createLinearGradient(0, sy - 260, 0, sy + 260);
+  sg.addColorStop(0, th.accent); sg.addColorStop(1, th.primary);
+  ctx.save();
+  ctx.beginPath(); ctx.arc(W/2, sy, 260, 0, Math.PI * 2); ctx.clip();
+  ctx.fillStyle = sg; ctx.fillRect(0, sy - 260, W, 520);
+  ctx.fillStyle = '#1a0640';
+  for (let i = 0; i < 7; i++) ctx.fillRect(0, sy + 20 + i * 36, W, 4 + i * 3);
+  ctx.restore();
+  const hy = H * 0.6, off = (t * 0.8) % 1;
+  ctx.save();
+  ctx.strokeStyle = hexA(th.primary, 0.85); ctx.lineWidth = 3;
+  ctx.shadowColor = th.primary; ctx.shadowBlur = 12;
+  for (let i = 0; i < 12; i++) {
+    const p = (i + off) / 12, y = hy + Math.pow(p, 2.2) * (H - hy);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  for (let i = -10; i <= 10; i++) {
+    ctx.beginPath(); ctx.moveTo(W/2 + i * 30, hy); ctx.lineTo(W/2 + i * 220, H); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, W, H);
+}
+
+function bgBurst(t, th) {
+  ctx.fillStyle = th.bg; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.translate(W/2, H/2); ctx.rotate(t * 0.15);
+  const n = 24, R = H;
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = i % 2 ? hexA(th.primary, 0.55) : hexA(th.primary, 0.18);
+    ctx.beginPath(); ctx.moveTo(0, 0);
+    ctx.arc(0, 0, R, i * 2 * Math.PI / n, (i + 1) * 2 * Math.PI / n);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  const v = ctx.createRadialGradient(W/2, H/2, 200, W/2, H/2, H * 0.85);
+  v.addColorStop(0, 'rgba(0,0,0,0.1)'); v.addColorStop(1, 'rgba(0,0,0,0.85)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
+
+function bgStadium(t, th) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#020308'); g.addColorStop(1, th.bg);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for (let r = 0; r < 14; r++) {
+    const y = H * 0.45 + r * 55, sz = 6 + r * 1.2;
+    for (let x = (r % 2) * 20; x < W; x += 40) {
+      const seed = Math.sin(x * 12.9898 + r * 78.233) * 43758.5453, rnd = seed - Math.floor(seed);
+      const bob = Math.sin(t * 3 + rnd * 20) * 3;
+      ctx.fillStyle = rnd > 0.5 ? hexA(th.primary, 0.35) : 'rgba(255,255,255,0.12)';
+      ctx.beginPath(); ctx.arc(x, y + bob, sz, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  for (let i = 0; i < 14; i++) {
+    const ph = (t * 1.3 + i * 0.37) % 2;
+    if (ph < 0.08) {
+      const x = (i * 173) % W, y = H * 0.5 + ((i * 91) % 500), a = 1 - ph / 0.08;
+      const fg = ctx.createRadialGradient(x, y, 0, x, y, 70);
+      fg.addColorStop(0, 'rgba(255,255,255,' + a + ')'); fg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = fg; ctx.fillRect(x - 70, y - 70, 140, 140);
+    }
+  }
+  [0.2, 0.5, 0.8].forEach((fx, i) => {
+    const sw = Math.sin(t * 0.8 + i * 2.1) * 300, x = W * fx;
+    const c = ctx.createLinearGradient(x, 0, x + sw, H * 0.8);
+    c.addColorStop(0, 'rgba(255,255,255,0.28)'); c.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = c; ctx.beginPath();
+    ctx.moveTo(x - 20, 0); ctx.lineTo(x + 20, 0);
+    ctx.lineTo(x + sw + 200, H * 0.8); ctx.lineTo(x + sw - 200, H * 0.8);
+    ctx.closePath(); ctx.fill();
+  });
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, 0, W, H);
+}
+
+function bgWave(t, th) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, th.bg); g.addColorStop(1, '#000');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for (let k = 0; k < 6; k++) {
+    const base = H * 0.25 + k * H * 0.14, amp = 40 + k * 8, sp = 0.8 + k * 0.25;
+    ctx.fillStyle = hexA(th.primary, 0.10 + k * 0.05);
+    ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x += 20) ctx.lineTo(x, base + Math.sin(x * 0.006 + t * sp + k) * amp);
+    ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+  }
+  floatingIcons(t, th, 0.22);
+}
+
+function neonText(txt, y, size, min, color, a) {
+  ctx.save(); ctx.globalAlpha *= a;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  fitFont(txt, 'italic 900', size, min, W - 120);
+  ctx.shadowColor = color; ctx.shadowBlur = 40; ctx.fillStyle = color; ctx.fillText(txt, W/2, y);
+  ctx.shadowBlur = 0; ctx.globalAlpha *= 0.85; ctx.fillStyle = '#fff'; ctx.fillText(txt, W/2, y);
+  ctx.restore();
+}
+
+function drawNeonTitle(t, d, th) {
+  const rv = k => easeOut(clamp01(t * 3 - k * 0.4));
+  neonText('GAME NIGHT', 520, 130, 60, th.accent, rv(0));
+  ctx.save(); ctx.globalAlpha *= rv(1);
+  ctx.font = '260px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(th.icon, W/2, 880); ctx.restore();
+  neonText((d.sport||'').toUpperCase(), 1250, 130, 48, '#fff', rv(2));
+  neonText((d.state||'').toUpperCase() + ' HIGH SCHOOL', 1370, 60, 28, th.primary, rv(3));
+}
+
+function drawNeonVS(t, d, th) {
+  const s1 = easeOut(clamp01(t * 3)), s2 = easeOut(clamp01((t - 0.15) * 3));
+  ctx.save(); ctx.translate(-W * (1 - s1), 0);
+  neonText((d.homeTeam||'').toUpperCase(), 620, 110, 40, th.accent, 1);
+  neonText('"' + (d.homeNick||'') + '"', 740, 56, 26, '#fff', 1);
+  ctx.restore();
+  const pulse = 1 + 0.06 * Math.sin(t * 20);
+  ctx.save(); ctx.translate(W/2, 960); ctx.scale(pulse, pulse); ctx.translate(-W/2, -960);
+  neonText('VS', 960, 220, 100, th.primary, easeOut(clamp01((t - 0.1) * 3)));
+  ctx.restore();
+  ctx.save(); ctx.translate(W * (1 - s2), 0);
+  neonText((d.awayTeam||'').toUpperCase(), 1300, 110, 40, th.accent, 1);
+  neonText('"' + (d.awayNick||'') + '"', 1420, 56, 26, '#fff', 1);
+  ctx.restore();
+}
+
+function neonCard(y, label, val, col, a, size) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.translate(0, (1 - a) * 60);
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; roundRect(80, y - 130, W - 160, 260, 28); ctx.fill();
+  ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.shadowColor = col; ctx.shadowBlur = 25;
+  roundRect(80, y - 130, W - 160, 260, 28); ctx.stroke(); ctx.shadowBlur = 0;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = col; ctx.font = 'bold 34px Arial'; ctx.fillText(label, W/2, y - 75);
+  ctx.fillStyle = '#fff'; fitFont(val, 'italic 900', size, 28, W - 260); ctx.fillText(val, W/2, y + 25);
+  ctx.restore();
+}
+
+function drawNeonInfo(t, d, th) {
+  const rv = k => easeOut(clamp01((t - k * 0.15) * 3.5));
+  neonCard(640,  'DATE',     ((d.day||'') + ' ' + (d.date||'')).toUpperCase(), th.primary, rv(0), 100);
+  neonCard(1000, 'KICK-OFF', (d.time||'').toUpperCase(), th.accent, rv(1), 150);
+  neonCard(1360, 'VENUE',    (d.location||'').toUpperCase(), th.primary, rv(2), 64);
+}
+
+function drawBurstHero(t, d, th) {
+  const s = easeOut(clamp01(t * 2.5));
+  ctx.save(); ctx.globalAlpha *= clamp01(t * 4);
+  ctx.translate(W/2, 700); ctx.scale(0.3 + 0.7 * s, 0.3 + 0.7 * s); ctx.rotate((1 - s) * 0.8);
+  ctx.font = '420px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(th.icon, 0, 0); ctx.restore();
+  const b = easeOut(clamp01((t - 0.25) * 3));
+  ctx.save(); ctx.globalAlpha *= b; ctx.translate(0, (1 - b) * 80);
+  ctx.fillStyle = th.accent; ctx.beginPath();
+  ctx.moveTo(60, 1080); ctx.lineTo(W - 100, 1080); ctx.lineTo(W - 60, 1220); ctx.lineTo(100, 1220); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  fitFont('MATCHDAY', 'italic 900', 110, 50, W - 260); ctx.fillText('MATCHDAY', W/2, 1150);
+  ctx.restore();
+  const c = easeOut(clamp01((t - 0.45) * 3));
+  ctx.save(); ctx.globalAlpha *= c; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round'; ctx.lineWidth = 12; ctx.strokeStyle = '#000'; ctx.fillStyle = '#fff';
+  const sp = (d.sport||'').toUpperCase();
+  fitFont(sp, 'italic 900', 140, 50, W - 120); ctx.strokeText(sp, W/2, 1390); ctx.fillText(sp, W/2, 1390);
+  ctx.restore();
+  textLine((d.state||'').toUpperCase() + ' HIGH SCHOOL', 1510, 'bold', 56, 26, th.accent, c);
+}
+
+function drawBurstTeams(t, d, th) {
+  const s1 = easeOut(clamp01(t * 2.5)), s2 = easeOut(clamp01((t - 0.15) * 2.5));
+  const band = (y, dir, s, fill, txtCol, nickCol, name, nick) => {
+    ctx.save(); ctx.translate(dir * -W * (1 - s), 0);
+    ctx.fillStyle = fill; ctx.beginPath();
+    if (dir > 0) { ctx.moveTo(0, y - 170); ctx.lineTo(W - 120, y - 170); ctx.lineTo(W - 200, y + 170); ctx.lineTo(0, y + 170); }
+    else         { ctx.moveTo(120, y - 170); ctx.lineTo(W, y - 170); ctx.lineTo(W, y + 170); ctx.lineTo(200, y + 170); }
+    ctx.closePath(); ctx.fill();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const cx = dir > 0 ? (W - 100) / 2 : (W + 100) / 2;
+    ctx.fillStyle = txtCol; fitFont(name.toUpperCase(), 'italic 900', 100, 36, W - 300); ctx.fillText(name.toUpperCase(), cx, y - 35);
+    ctx.fillStyle = nickCol; fitFont('"' + nick + '"', 'italic bold', 52, 24, W - 300); ctx.fillText('"' + nick + '"', cx, y + 70);
+    ctx.restore();
+  };
+  band(620, 1, s1, th.primary, '#fff', '#000', d.homeTeam||'', d.homeNick||'');
+  band(1300, -1, s2, '#fff', '#111', th.primary, d.awayTeam||'', d.awayNick||'');
+  const vs = easeOut(clamp01((t - 0.3) * 3));
+  ctx.save(); ctx.translate(W/2, 960); ctx.scale(vs, vs); ctx.rotate(-0.15);
+  ctx.fillStyle = th.accent; ctx.shadowColor = '#000'; ctx.shadowBlur = 30;
+  ctx.beginPath(); ctx.arc(0, 0, 120, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#000'; ctx.font = 'italic 900 120px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('VS', 0, 6); ctx.restore();
+}
+
+function drawBurstSlam(t, d, th) {
+  const s = easeOut(clamp01(t * 4)), sc = 3 - 2 * s;
+  ctx.save(); ctx.globalAlpha *= clamp01(t * 6);
+  ctx.translate(W/2 + (1 - s) * Math.sin(t * 90) * 20, 720); ctx.scale(sc, sc);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const tm = (d.time||'').toUpperCase();
+  fitFont(tm, 'italic 900', 300, 100, W - 140);
+  ctx.lineJoin = 'round'; ctx.lineWidth = 14; ctx.strokeStyle = '#000'; ctx.strokeText(tm, 0, 0);
+  ctx.fillStyle = '#fff'; ctx.fillText(tm, 0, 0); ctx.restore();
+  const b = easeOut(clamp01((t - 0.3) * 3));
+  ctx.save(); ctx.globalAlpha *= b;
+  ctx.fillStyle = th.accent; ctx.beginPath();
+  ctx.moveTo(100, 960); ctx.lineTo(W - 60, 960); ctx.lineTo(W - 100, 1100); ctx.lineTo(60, 1100); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const dd = ((d.day||'') + ' ' + (d.date||'')).toUpperCase();
+  fitFont(dd, 'italic 900', 84, 36, W - 260); ctx.fillText(dd, W/2, 1030);
+  ctx.restore();
+  const c = easeOut(clamp01((t - 0.5) * 3));
+  ctx.save(); ctx.globalAlpha *= c;
+  ctx.fillStyle = 'rgba(0,0,0,0.8)'; roundRect(70, 1200, W - 140, 140, 70); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const lc = '📍 ' + (d.location||'').toUpperCase();
+  fitFont(lc, 'bold', 52, 22, W - 260); ctx.fillText(lc, W/2, 1270);
+  ctx.restore();
+}
+
+function drawTicket(t, d, th) {
+  const sec = t * 9.5, rv = k => easeOut(clamp01((sec - 0.3 - k * 0.22) * 2));
+  const slide = easeOut(clamp01(t * 6));
+  const x = 70, y = 230, w = 940, h = 1460;
+  ctx.save(); ctx.translate(0, (1 - slide) * -H * 0.7);
+  ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 40;
+  ctx.fillStyle = '#f5f0e6'; roundRect(x, y, w, h, 36); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.save(); roundRect(x, y, w, h, 36); ctx.clip();
+  ctx.fillStyle = th.primary; ctx.fillRect(x, y, w, 200);
+  ctx.restore();
+  textLine('ADMIT ONE · ' + (d.sport||'').toUpperCase(), 330, 'bold', 64, 28, '#fff', 1);
+  textLine('HOME', 510, 'bold', 28, 20, '#888', rv(0));
+  textLine((d.homeTeam||'').toUpperCase(), 585, 'bold', 78, 32, '#111', rv(0));
+  textLine('"' + (d.homeNick||'') + '"', 665, 'italic bold', 46, 24, th.primary, rv(1));
+  textLine('VS', 765, 'bold', 64, 30, '#111', rv(2));
+  textLine((d.awayTeam||'').toUpperCase(), 870, 'bold', 78, 32, '#111', rv(3));
+  textLine('"' + (d.awayNick||'') + '"', 950, 'italic bold', 46, 24, th.primary, rv(4));
+  ctx.strokeStyle = '#999'; ctx.lineWidth = 4; ctx.setLineDash([20, 16]);
+  ctx.beginPath(); ctx.moveTo(x + 40, 1060); ctx.lineTo(x + w - 40, 1060); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#0a0a0f';
+  ctx.beginPath(); ctx.arc(x, 1060, 36, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + w, 1060, 36, 0, Math.PI * 2); ctx.fill();
+  textLine(((d.day||'') + ' ' + (d.date||'')).toUpperCase(), 1150, 'bold', 60, 28, th.primary, rv(5));
+  textLine((d.time||'').toUpperCase(), 1290, 'bold', 150, 60, '#111', rv(6));
+  textLine('📍 ' + (d.location||'').toUpperCase(), 1420, 'bold', 40, 20, '#555', rv(7));
+  ctx.save(); ctx.globalAlpha *= rv(8); ctx.fillStyle = '#111';
+  for (let i = 0, bx = x + 140; bx < x + w - 140; i++) {
+    const bw = 4 + ((i * 7) % 5) * 3;
+    ctx.fillRect(bx, 1500, bw, 120); bx += bw + 6 + ((i * 3) % 4) * 2;
+  }
+  ctx.restore();
+  ctx.restore();
+}
+
+function drawWaveFacts(t, d, th) {
+  const sec = t * 10.5, idx = Math.min(2, Math.floor(sec / 3.5)), u = (sec - idx * 3.5) / 3.5;
+  const a = Math.min(clamp01(u / 0.12), 1 - clamp01((u - 0.88) / 0.12));
+  const e = easeOut(clamp01(u * 4));
+  const sx = (1 - e) * W;
+  ctx.save(); ctx.globalAlpha *= a;
+  ctx.fillStyle = th.accent; roundRect(W/2 - 190, 440, 380, 90, 45); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'italic 900 48px Arial'; ctx.fillText(['MATCHUP', 'WHEN', 'WHERE'][idx], W/2, 487);
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i === idx ? th.accent : 'rgba(255,255,255,0.3)';
+    ctx.beginPath(); ctx.arc(W/2 - 50 + i * 50, 1600, 12, 0, Math.PI * 2); ctx.fill();
+  }
+  if (idx === 0) {
+    textLine((d.homeTeam||'').toUpperCase(), 730, 'italic 900', 100, 36, '#fff', 1, W/2 - sx);
+    textLine('"' + (d.homeNick||'') + '"', 830, 'italic bold', 52, 24, th.accent, 1, W/2 - sx);
+    textLine('VS', 1000, 'italic 900', 160, 80, th.primary, 1);
+    textLine((d.awayTeam||'').toUpperCase(), 1190, 'italic 900', 100, 36, '#fff', 1, W/2 + sx);
+    textLine('"' + (d.awayNick||'') + '"', 1290, 'italic bold', 52, 24, th.accent, 1, W/2 + sx);
+  } else if (idx === 1) {
+    textLine((d.day||'').toUpperCase(), 760, 'italic 900', 130, 50, '#fff', 1, W/2 - sx);
+    textLine((d.date||'').toUpperCase(), 920, 'italic 900', 100, 44, th.accent, 1, W/2 + sx);
+    textLine((d.time||'').toUpperCase(), 1190, 'italic 900', 230, 90, '#fff', e);
+  } else {
+    ctx.font = '260px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(th.icon, W/2, 800);
+    textLine('📍 ' + (d.location||'').toUpperCase(), 1130, 'italic 900', 76, 28, '#fff', e);
+    textLine((d.sport||'').toUpperCase(), 1290, 'bold', 60, 28, th.accent, e);
+    textLine((d.state||'').toUpperCase() + ' HIGH SCHOOL', 1380, 'bold', 40, 22, '#bbb', e);
+  }
+  ctx.restore();
+}
+
+Object.assign(TEMPLATES, {
+  neon:   { label:'Neon',   phases:[ph('neonTitle',0,2), ph('neonVS',2,6.5), ph('neonInfo',6.5,12.5), ph('cta',12.5,15)] },
+  burst:  { label:'Burst',  phases:[ph('burstHero',0,2), ph('burstTeams',2,7), ph('burstSlam',7,12.5), ph('cta',12.5,15)] },
+  ticket: { label:'Ticket', phases:[ph('ticket',0,9.5), ph('hashtags',9.5,12.5), ph('cta',12.5,15)] },
+  wave:   { label:'Wave',   phases:[ph('waveFacts',0,10.5), ph('hashtags',10.5,12.5), ph('cta',12.5,15)] },
+});
+Object.assign(DRAWERS, { neonTitle:drawNeonTitle, neonVS:drawNeonVS, neonInfo:drawNeonInfo,
+  burstHero:drawBurstHero, burstTeams:drawBurstTeams, burstSlam:drawBurstSlam,
+  ticket:drawTicket, waveFacts:drawWaveFacts });
+Object.assign(BG, { neon:bgNeon, burst:bgBurst, stadium:bgStadium, ticket:bgStadium, wave:bgWave, sport:bgSport });
+
+const tplSelect = document.getElementById('tplSelect');
+tplSelect.innerHTML = '<option value="random">🎲 Template acak</option>' +
+  Object.keys(TEMPLATES).map(k => `<option value="${k}">${TEMPLATES[k].label}</option>`).join('');
+function reapplyVariants() {
+  if (!rows.length) return;
+  assignTemplates(); saveSession(); renderTable(); setPreview(selIdx, false);
+}
+tplSelect.addEventListener('change', reapplyVariants);
+document.getElementById('randBg').addEventListener('change', reapplyVariants);
+
+const PALETTES = {
+  merah:  { label:'Merah',  primary:'#FF3B30', accent:'#FFD60A', bg:'#1a0505' },
+  hijau:  { label:'Hijau',  primary:'#34C759', accent:'#FFFFFF', bg:'#051a08' },
+  oranye: { label:'Oranye', primary:'#FF9500', accent:'#FFFFFF', bg:'#1a0f05' },
+  biru:   { label:'Biru',   primary:'#0A84FF', accent:'#FFFFFF', bg:'#05101a' },
+  ungu:   { label:'Ungu',   primary:'#AF52DE', accent:'#FFD60A', bg:'#12051a' },
+  pink:   { label:'Pink',   primary:'#FF2D92', accent:'#FFFFFF', bg:'#1a0510' },
+  toska:  { label:'Toska',  primary:'#00A896', accent:'#FFE066', bg:'#031a17' },
+  indigo: { label:'Indigo', primary:'#5E5CE6', accent:'#FFD60A', bg:'#08081f' },
+};
+const PAL_KEYS = Object.keys(PALETTES);
+const SPORTS = [
+  ['water polo','🤽','biru','pool'], ['beach volleyball','🏐','oranye','court'], ['flag football','🏈','merah','field'],
+  ['football','🏈','merah','field'], ['futsal','⚽','hijau','court'], ['soccer','⚽','hijau','field'],
+  ['volleyball','🏐','oranye','court'], ['basketball','🏀','oranye','court'], ['baseball','⚾','indigo','diamond'],
+  ['softball','🥎','pink','diamond'], ['lacrosse','🥍','toska','field'], ['field hockey','🏑','hijau','field'],
+  ['ice hockey','🏒','biru','ice'], ['hockey','🏒','toska','ice'], ['rugby','🏉','indigo','field'],
+  ['ultimate','🥏','toska','field'], ['cricket','🏏','hijau','field'], ['cross country','🏃','hijau','course'],
+  ['track','🏃','ungu','track'], ['swim','🏊','biru','pool'], ['diving','🤿','toska','pool'],
+  ['rowing','🚣','biru','pool'], ['crew','🚣','biru','pool'], ['surf','🏄','toska','pool'], ['sailing','⛵','biru','course'],
+  ['wrestling','🤼','merah','mat'], ['gymnastics','🤸','pink','mat'], ['cheer','📣','pink','mat'],
+  ['dance','💃','ungu','mat'], ['drill','💃','ungu','mat'], ['judo','🥋','merah','mat'], ['karate','🥋','merah','mat'],
+  ['taekwondo','🥋','merah','mat'], ['martial','🥋','merah','mat'], ['boxing','🥊','merah','mat'],
+  ['fencing','🤺','ungu','mat'], ['weightlifting','🏋️','merah','mat'], ['powerlifting','🏋️','merah','mat'],
+  ['table tennis','🏓','merah','court'], ['pickleball','🏓','toska','court'], ['tennis','🎾','toska','court'],
+  ['badminton','🏸','toska','court'], ['racquetball','🎾','indigo','court'], ['squash','🎾','indigo','court'],
+  ['handball','🤾','oranye','court'], ['golf','⛳','hijau','course'], ['cycling','🚴','toska','course'],
+  ['mountain bik','🚵','toska','course'], ['ski','⛷️','indigo','course'], ['snowboard','🏂','biru','course'],
+  ['archery','🏹','hijau','course'], ['equestrian','🏇','oranye','course'], ['bowling','🎳','indigo','generic'],
+  ['esport','🎮','ungu','generic'], ['bocce','🎯','hijau','generic'], ['skate','🛹','oranye','generic'],
+];
+function sportInfo(sp) {
+  const s = (sp || '').toLowerCase();
+  for (const [k, icon, pal, kind] of SPORTS) if (s.includes(k)) return { icon, pal, kind };
+  let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { icon: '🏆', pal: PAL_KEYS[h % PAL_KEYS.length], kind: 'generic' };
+}
+function sportIcon(sp) { return sportInfo(sp).icon; }
+function sportPal(sp)  { return sportInfo(sp).pal; }
+function getTheme(d) {
+  const info = sportInfo(d.sport);
+  const key = d.pal && PALETTES[d.pal] ? d.pal : info.pal;
+  return Object.assign({ icon: info.icon, kind: info.kind }, PALETTES[key]);
+}
+
+function bgSport(t, th) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#05070c'); g.addColorStop(1, th.bg);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate(W/2, H/2 + Math.sin(t * 0.5) * 30);
+  ctx.strokeStyle = hexA(th.primary, 0.5); ctx.lineWidth = 6; ctx.lineJoin = 'round';
+  const line = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+  const circ = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); };
+  switch (th.kind) {
+    case 'field':
+      roundRect(-420, -760, 840, 1520, 10); ctx.stroke(); line(-420, 0, 420, 0); circ(0, 0, 150);
+      roundRect(-230, -760, 460, 220, 6); ctx.stroke(); roundRect(-230, 540, 460, 220, 6); ctx.stroke();
+      for (let i = 1; i < 8; i++) { ctx.globalAlpha = 0.25; line(-420, -760 + i * 190, 420, -760 + i * 190); }
+      break;
+    case 'court':
+      roundRect(-380, -700, 760, 1400, 8); ctx.stroke();
+      ctx.lineWidth = 14; line(-420, 0, 420, 0); ctx.lineWidth = 6;
+      line(-380, -230, 380, -230); line(-380, 230, 380, 230); circ(0, -700 + 160, 0.1);
+      ctx.globalAlpha = 0.3; for (let i = -9; i <= 9; i++) line(i * 42, -20, i * 42, 20);
+      break;
+    case 'pool': {
+      roundRect(-430, -760, 860, 1520, 30); ctx.stroke();
+      ctx.setLineDash([26, 18]);
+      for (let i = -3; i <= 3; i++) line(i * 120, -760, i * 120, 760);
+      ctx.setLineDash([]); ctx.globalAlpha = 0.5;
+      for (let r = 0; r < 12; r++) {
+        ctx.beginPath();
+        for (let x = -430; x <= 430; x += 20) {
+          const y = -700 + r * 128 + Math.sin(x * 0.02 + t * 2 + r) * 14;
+          x === -430 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      break;
+    }
+    case 'track':
+      for (let i = 0; i < 6; i++) { roundRect(-400 + i * 36, -720 + i * 36, 800 - i * 72, 1440 - i * 72, 400 - i * 36); ctx.stroke(); }
+      line(-400, 0, -220, 0); line(220, 0, 400, 0);
+      break;
+    case 'diamond':
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeRect(-330, -330, 660, 660);
+      ctx.beginPath(); ctx.arc(-330, 330, 780, -Math.PI / 2, 0); ctx.stroke();
+      ctx.globalAlpha = 0.6; ctx.fillStyle = hexA(th.primary, 0.6);
+      [[-330, -330], [330, -330], [330, 330], [-330, 330]].forEach(([x, y]) => ctx.fillRect(x - 28, y - 28, 56, 56));
+      circ(0, 0, 60);
+      break;
+    case 'mat':
+      circ(0, 0, 520); circ(0, 0, 380); circ(0, 0, 70);
+      ctx.globalAlpha = 0.3; roundRect(-560, -560, 1120, 1120, 40); ctx.stroke();
+      break;
+    case 'ice':
+      roundRect(-400, -760, 800, 1520, 240); ctx.stroke(); line(-400, 0, 400, 0);
+      line(-400, -250, 400, -250); line(-400, 250, 400, 250);
+      [[-200, -420], [200, -420], [-200, 420], [200, 420]].forEach(([x, y]) => circ(x, y, 110)); circ(0, 0, 110);
+      break;
+    case 'course':
+      ctx.globalAlpha = 0.6;
+      for (let k = 0; k < 5; k++) {
+        ctx.beginPath();
+        for (let y = -900; y <= 900; y += 30) {
+          const x = Math.sin(y * 0.004 + t * 0.6) * 220 + (k - 2) * 120;
+          y === -900 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      break;
+    default:
+      for (let i = 1; i <= 6; i++) { ctx.globalAlpha = 0.5 - i * 0.05; circ(0, 0, i * 130 + (t * 20) % 130); }
+  }
+  ctx.restore();
+  for (let i = 0; i < 3; i++) {
+    const x = W * (0.2 + i * 0.3), sw = Math.sin(t * 0.7 + i * 2) * 240;
+    const c = ctx.createLinearGradient(x, 0, x + sw, H * 0.7);
+    c.addColorStop(0, 'rgba(255,255,255,0.16)'); c.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = c; ctx.beginPath();
+    ctx.moveTo(x - 20, 0); ctx.lineTo(x + 20, 0); ctx.lineTo(x + sw + 220, H * 0.7); ctx.lineTo(x + sw - 220, H * 0.7);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(0, 0, W, H);
+}
+
+const palSelect = document.getElementById('palSelect');
+palSelect.innerHTML = '<option value="random">🎨 Warna acak</option><option value="sport">Warna sesuai olahraga</option>' +
+  PAL_KEYS.map(k => `<option value="${k}">${PALETTES[k].label}</option>`).join('');
+palSelect.addEventListener('change', () => reapplyVariants());
+document.getElementById('rollPal').addEventListener('click', () => {
+  if (!rows.length || recording) return;
+  rows.forEach(r => { r.pal = nextOf(PAL_KEYS, r.pal && PALETTES[r.pal] ? r.pal : sportPal(r.sport)); });
+  afterRoll();
+});
+
+function assignTemplates() {
+  const keys = Object.keys(TEMPLATES);
+  const pick = tplSelect.value, rb = document.getElementById('randBg').checked;
+  let prev = null, prevBg = null, prevPal = null;
+  const pp = palSelect.value;
+  rows.forEach(r => {
+    let k;
+    if (pick !== 'random' && TEMPLATES[pick]) k = pick;
+    else do { k = keys[Math.floor(Math.random() * keys.length)]; } while (k === prev && keys.length > 1);
+    r.tpl = k; prev = k;
+    if (pp === 'random') { let c; do { c = PAL_KEYS[Math.floor(Math.random() * PAL_KEYS.length)]; } while (c === prevPal); r.pal = c; prevPal = c; }
+    else if (pp === 'sport') r.pal = null;
+    else r.pal = pp;
+    if (rb) {
+      let b;
+      do { b = BG_KEYS[Math.floor(Math.random() * BG_KEYS.length)]; } while (b === prevBg);
+      r.bgKey = b; prevBg = b;
+    } else r.bgKey = k;
+  });
+}
+
+const nextOf = (list, cur) => list[(list.indexOf(cur) + 1) % list.length];
+function afterRoll(i) {
+  saveSession();
+  renderTable();
+  setPreview(i == null ? selIdx : i, i != null);
+}
+document.getElementById('rollTpl').addEventListener('click', () => {
+  if (!rows.length || recording) return;
+  const keys = Object.keys(TEMPLATES);
+  rows.forEach(r => { const wasNative = r.bgKey === r.tpl; r.tpl = nextOf(keys, r.tpl); if (wasNative) r.bgKey = r.tpl; });
+  afterRoll();
+});
+document.getElementById('rollBg').addEventListener('click', () => {
+  if (!rows.length || recording) return;
+  rows.forEach(r => { r.bgKey = nextOf(BG_KEYS, r.bgKey === 'ticket' ? 'stadium' : r.bgKey); });
+  afterRoll();
+});
+document.getElementById('swapTB').addEventListener('click', () => {
+  if (!rows.length || recording) return;
+  const t = rows.map(r => r.tpl), b = rows.map(r => r.bgKey), n = rows.length;
+  if (n > 1) rows.forEach((r, i) => { r.tpl = t[(i + 1) % n]; r.bgKey = b[(i - 1 + n) % n]; });
+  else { const k = rows[0]; const tmp = k.tpl; k.tpl = BG_KEYS.includes(k.bgKey) && TEMPLATES[k.bgKey] ? k.bgKey : k.tpl; k.bgKey = tmp; }
+  afterRoll();
+});
+document.querySelector('#dataTable tbody').addEventListener('click', e => {
+  if (recording) return;
+  const td = e.target.closest('td.roll');
+  if (!td) { const tr = e.target.closest('tr[data-i]'); if (tr) setPreview(+tr.dataset.i, true); return; }
+  const i = +td.dataset.i, r = rows[i]; if (!r) return;
+  if (td.dataset.roll === 'tpl') r.tpl = nextOf(Object.keys(TEMPLATES), r.tpl);
+  else if (td.dataset.roll === 'pal') r.pal = nextOf(PAL_KEYS, r.pal && PALETTES[r.pal] ? r.pal : sportPal(r.sport));
+  else r.bgKey = nextOf(BG_KEYS, r.bgKey === 'ticket' ? 'stadium' : r.bgKey);
+  afterRoll(i);
+});
+
+function setPreview(i, scroll) {
+  if (!rows.length) return;
+  selIdx = Math.max(0, Math.min(rows.length - 1, i));
+  previewData = rows[selIdx]; previewStart = performance.now();
+  const r = rows[selIdx];
+  document.getElementById('previewLabel').textContent = `#${selIdx + 1}/${rows.length} · ${r.homeTeam} vs ${r.awayTeam}`;
+  document.querySelectorAll('#dataTable tbody tr').forEach(tr => tr.classList.toggle('sel', +tr.dataset.i === selIdx));
+  if (scroll) {
+    const b = canvas.getBoundingClientRect();
+    if (b.top < 0 || b.bottom > window.innerHeight) canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+let wakeLock = null;
+async function lockScreen() {
+  try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+function unlockScreen() { try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+document.addEventListener('visibilitychange', () => {
+  if (!recording) return;
+  if (document.hidden) {
+    document.getElementById('status2').textContent = '⚠️ Jangan tinggalkan tab ini saat rendering, video bisa macet.';
+  } else {
+    lockScreen();
+  }
+});
+
+// ==================== v5: WebCodecs H.264 + mp4-muxer (MP4 standar, CFR, faststart) ====================
+// Alasan: MediaRecorder menghasilkan MP4 fragmented dengan frame rate variabel yang sering ditolak
+// Facebook ("Your file can't be uploaded"). Di sini frame digambar deterministik per 1/FPS detik,
+// di-encode H.264 (+AAC kalau didukung), lalu di-mux ke MP4 biasa dengan moov di awal file.
+// Kalau WebCodecs / mp4-muxer tidak tersedia atau gagal, otomatis fallback ke MediaRecorder lama.
+const _wait = ms => new Promise(r => setTimeout(r, ms));
+async function pickAvcCodec() {
+  for (const c of ['avc1.640028', 'avc1.4d0028', 'avc1.64002A', 'avc1.42002A']) {
+    try {
+      const s = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate: 4_000_000, framerate: FPS, avc: { format: 'avc' } });
+      if (s && s.supported) return c;
+    } catch (e) {}
+  }
+  return null;
+}
+async function renderBeatAudio() {
+  const SR = 44100;
+  const oc = new OfflineAudioContext(1, SR * DUR, SR);
+  const master = oc.createGain();
+  master.gain.value = 0.18;
+  master.connect(oc.destination);
+  for (let i = 0; i < DUR * 2; i++) {
+    const t = i * 0.5;
+    const osc = oc.createOscillator();
+    const g = oc.createGain();
+    osc.frequency.setValueAtTime(150, t);
+    osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+    g.gain.setValueAtTime(0.6, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    osc.connect(g).connect(master);
+    osc.start(t);
+    osc.stop(t + 0.25);
+  }
+  const noise = oc.createBufferSource();
+  const buf = oc.createBuffer(1, SR * 2, SR);
+  const nd = buf.getChannelData(0);
+  for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  noise.buffer = buf;
+  const ng = oc.createGain();
+  ng.gain.setValueAtTime(0, 0);
+  ng.gain.linearRampToValueAtTime(0.3, 0.4);
+  ng.gain.linearRampToValueAtTime(0, 1.5);
+  const bp = oc.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 800;
+  noise.connect(bp).connect(ng).connect(master);
+  noise.start(0);
+  noise.stop(2);
+  return await oc.startRendering();
+}
+async function generateVideoWebCodecs(d) {
+  if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined') throw new Error('WebCodecs tidak tersedia');
+  if (!window.Mp4Muxer) throw new Error('mp4-muxer gagal dimuat (cek koneksi)');
+  const codec = await pickAvcCodec();
+  if (!codec) throw new Error('Encoder H.264 tidak didukung browser ini');
+
+  let audioBuf = null, audioCfg = null;
+  if (document.getElementById('addAudio').checked && typeof AudioEncoder !== 'undefined' && typeof AudioData !== 'undefined') {
+    try {
+      const cfg = { codec: 'mp4a.40.2', sampleRate: 44100, numberOfChannels: 1, bitrate: 96000 };
+      const sup = await AudioEncoder.isConfigSupported(cfg);
+      if (sup && sup.supported) { audioCfg = cfg; audioBuf = await renderBeatAudio(); }
+    } catch (e) { console.warn('Audio AAC dilewati:', e); }
+  }
+
+  recording = true;
+  await lockScreen();
+  let venc = null, aenc = null;
+  try {
+    const target = new Mp4Muxer.ArrayBufferTarget();
+    const muxer = new Mp4Muxer.Muxer(Object.assign({
+      target,
+      video: { codec: 'avc', width: W, height: H },
+      fastStart: 'in-memory'
+    }, audioCfg ? { audio: { codec: 'aac', numberOfChannels: 1, sampleRate: 44100 } } : {}));
+
+    let encErr = null;
+    venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => { encErr = e; } });
+    venc.configure({ codec, width: W, height: H, bitrate: 4_000_000, framerate: FPS, avc: { format: 'avc' } });
+
+    const total = DUR * FPS;
+    for (let i = 0; i < total; i++) {
+      if (encErr) throw encErr;
+      drawFrame(i / FPS, d, i < COVER_FRAMES);
+      const frame = new VideoFrame(canvas, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+      venc.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
+      frame.close();
+      while (venc.encodeQueueSize > 6) { await _wait(4); if (encErr) throw encErr; }
+      if (i % 3 === 0) { if (window.__onProg) window.__onProg((i + 1) / total * 0.9); await _wait(0); }
+    }
+    await venc.flush();
+    if (encErr) throw encErr;
+
+    if (audioCfg) {
+      aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => { encErr = e; } });
+      aenc.configure(audioCfg);
+      const data = audioBuf.getChannelData(0), CH = 4096;
+      for (let off = 0; off < data.length; off += CH) {
+        const n = Math.min(CH, data.length - off);
+        const ad = new AudioData({ format: 'f32-planar', sampleRate: audioBuf.sampleRate, numberOfFrames: n, numberOfChannels: 1,
+          timestamp: Math.round(off / audioBuf.sampleRate * 1e6), data: data.subarray(off, off + n) });
+        aenc.encode(ad); ad.close();
+        while (aenc.encodeQueueSize > 8) await _wait(2);
+      }
+      await aenc.flush();
+      if (encErr) throw encErr;
+    }
+    muxer.finalize();
+    const blob = new Blob([target.buffer], { type: 'video/mp4' });
+    if (blob.size < 50 * 1024) throw new Error('Hasil encode terlalu kecil (' + blob.size + ' B)');
+    window.__lastEncoder = 'WebCodecs H.264 (' + codec + ')' + (audioCfg ? ' + AAC' : ', tanpa audio');
+    if (window.__onProg) window.__onProg(1);
+    return { blob, mimeType: 'video/mp4' };
+  } finally {
+    try { if (venc && venc.state !== 'closed') venc.close(); } catch (e) {}
+    try { if (aenc && aenc.state !== 'closed') aenc.close(); } catch (e) {}
+    unlockScreen();
+    recording = false;
+  }
+}
+async function generateVideo(d) {
+  try {
+    const r = await generateVideoWebCodecs(d);
+    console.log('[v5] encoder:', window.__lastEncoder);
+    return r;
+  } catch (e) {
+    console.warn('[v5] WebCodecs gagal, fallback MediaRecorder:', e);
+    recording = false;
+    window.__lastEncoder = 'MediaRecorder (fallback karena: ' + ((e && e.message) || e) + ')';
+    return await generateVideoRecorder(d);
+  }
+}
+
+async function generateVideoRecorder(d) {
+  if (typeof MediaRecorder === 'undefined' || !canvas.captureStream) {
+    throw new Error('Browser ini tidak mendukung perekaman video. Pakai Chrome / Safari terbaru.');
+  }
+  recording = true;
+  await lockScreen();
+  const stream = canvas.captureStream(FPS);
+
+  let audioCtx = null;
+  if (document.getElementById('addAudio').checked) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+      const dest = audioCtx.createMediaStreamDestination();
+      const master = audioCtx.createGain();
+      master.gain.value = 0.18;
+      master.connect(dest);
+      const startTime = audioCtx.currentTime + 0.1;
+      for (let i = 0; i < DUR * 2; i++) {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.frequency.setValueAtTime(150, startTime + i*0.5);
+        osc.frequency.exponentialRampToValueAtTime(40, startTime + i*0.5 + 0.15);
+        g.gain.setValueAtTime(0.6, startTime + i*0.5);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + i*0.5 + 0.2);
+        osc.connect(g).connect(master);
+        osc.start(startTime + i*0.5);
+        osc.stop(startTime + i*0.5 + 0.25);
+      }
+      const noise = audioCtx.createBufferSource();
+      const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+      const nd = buf.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      noise.buffer = buf;
+      const ng = audioCtx.createGain();
+      ng.gain.setValueAtTime(0, startTime);
+      ng.gain.linearRampToValueAtTime(0.3, startTime + 0.4);
+      ng.gain.linearRampToValueAtTime(0, startTime + 1.5);
+      const bp = audioCtx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = 800;
+      noise.connect(bp).connect(ng).connect(master);
+      noise.start(startTime);
+      noise.stop(startTime + 2);
+      dest.stream.getAudioTracks().forEach(tr => stream.addTrack(tr));
+    } catch (e) { console.warn('Audio skip:', e); }
+  }
+
+  const mimeType =
+    MediaRecorder.isTypeSupported('video/mp4;codecs=h264,aac') ? 'video/mp4;codecs=h264,aac' :
+    MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' :
+    MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' :
+    MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus' :
+    'video/webm';
+
+  const rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
+  const chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+
+  return new Promise(resolve => {
+    rec.onstop = () => {
+      if (audioCtx) audioCtx.close();
+      stream.getTracks().forEach(tr => tr.stop());
+      unlockScreen();
+      recording = false;
+      resolve({ blob: new Blob(chunks, { type: mimeType }), mimeType });
+    };
+    rec.start(100);
+    const t0 = performance.now();
+    function tick() {
+      const el = (performance.now() - t0) / 1000;
+      if (el >= DUR) {
+        drawFrame(DUR, d);
+        setTimeout(() => rec.stop(), 250);
+        return;
+      }
+      drawFrame(el, d);
+      if (window.__onProg) window.__onProg(Math.min(el / DUR, 1));
+      requestAnimationFrame(tick);
+    }
+    tick();
+  });
+}
+
+document.getElementById('shuffle').addEventListener('click', () => {
+  if (recording || !rows.length) return;
+  assignTemplates(); renderTable(); setPreview(selIdx, false);
+});
+
+const genOneBtn = document.getElementById('genOne');
+const genAllBtn = document.getElementById('genAll');
+function setBusy(b) {
+  genOneBtn.disabled = b || !rows.length;
+  genAllBtn.disabled = b || !rows.length;
+  loadBtn.disabled = b || !fileInput.files[0];
+  document.getElementById('shuffle').disabled = b || !rows.length;
+  fileInput.disabled = b;
+}
+
+// ==================== KV CONFIG (per-user, localStorage) ====================
+const KV_STORE_KEY = 'jhon_kv_cfg_v1';
+function kvLoad() {
+  try {
+    const o = JSON.parse(localStorage.getItem(KV_STORE_KEY) || 'null');
+    return (o && o.url && o.token) ? o : null;
+  } catch (e) { return null; }
+}
+function kvRender() {
+  const cfg = kvLoad();
+  document.getElementById('kvForm').style.display = cfg ? 'none' : 'block';
+  document.getElementById('kvSaved').style.display = cfg ? 'block' : 'none';
+  document.getElementById('kvMask').textContent = cfg ? ('· ' + cfg.url.replace(/^(https?:\/\/).*/, '$1') + '••••') : '';
+}
+document.getElementById('kvSave').addEventListener('click', () => {
+  const url = document.getElementById('kvUrl').value.trim();
+  const token = document.getElementById('kvToken').value.trim();
+  const st = document.getElementById('kvStat');
+  if (!/^https?:\/\//i.test(url) || !token) { st.textContent = '❌ URL harus diawali http(s):// dan token wajib diisi.'; return; }
+  try { localStorage.setItem(KV_STORE_KEY, JSON.stringify({ url, token })); }
+  catch (e) { st.textContent = '❌ Gagal simpan: ' + e.message; return; }
+  document.getElementById('kvUrl').value = '';
+  document.getElementById('kvToken').value = '';
+  st.textContent = '✅ Tersimpan di perangkat ini.';
+  kvRender();
+});
+document.getElementById('kvEdit').addEventListener('click', () => {
+  localStorage.removeItem(KV_STORE_KEY);
+  document.getElementById('kvStat').textContent = 'Masukkan Worker URL & token baru, lalu Simpan.';
+  kvRender();
+});
+document.getElementById('kvClear').addEventListener('click', () => {
+  localStorage.removeItem(KV_STORE_KEY);
+  document.getElementById('kvStat').textContent = '🗑️ Data Worker dihapus dari perangkat ini.';
+  kvRender();
+});
+kvRender();
+
+// ==================== UPLOAD KE WORKER KV ====================
+async function uploadKV(buf, mimeType, idx) {
+  const cfg = kvLoad();
+  const statEl = document.getElementById('kvStat');
+  if (!cfg) { statEl.textContent = '❌ Isi & simpan Worker URL + Token dulu.'; return false; }
+  const base = cfg.url.replace(/\/$/, '');
+  const token = cfg.token;
+  const fmt = document.getElementById('kvFmt').value;
+  const key = String(idx).padStart(2, '0');
+  const sizeMB = (buf.byteLength / 1048576).toFixed(1);
+  statEl.textContent = `⏫ Upload video${key} (${sizeMB} MB, ${fmt === 'mp4' ? 'MP4' : 'base64'})...`;
+  const clean = (mimeType || 'video/mp4').split(';')[0];
+  const blob = new Blob([buf], { type: clean });
+  let body, ctype;
+  if (fmt === 'mp4') {
+    body = blob; ctype = clean;               // file video asli, tanpa base64
+  } else {
+    try {
+      body = await new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = () => rej(new Error('Gagal convert base64'));
+        r.readAsDataURL(blob);
+      });
+      ctype = 'text/plain';
+    } catch (e) { statEl.textContent = `❌ video${key}: ${e.message}`; return false; }
+  }
+  try {
+    const res = await fetch(`${base}/video/upload/${key}?token=${encodeURIComponent(token)}`, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': ctype }
+    });
+    const text = await res.text();
+    if (res.ok) {
+      statEl.textContent = `✅ video${key} OK (${sizeMB} MB)`;
+      return true;
+    } else {
+      statEl.textContent = `❌ video${key}: ${res.status} ${text.slice(0, 80)}`;
+      return false;
+    }
+  } catch (e) {
+    statEl.textContent = `❌ video${key}: ${e.message}`;
+    return false;
+  }
+}
+
+genOneBtn.addEventListener('click', async () => {
+  if (!rows.length || recording) return;
+  setBusy(true);
+  const st = document.getElementById('status2');
+  st.textContent = `🎬 Rendering video #${selIdx + 1} (15 detik)...`;
+  try {
+    const bar1 = document.getElementById('progressBar');
+    window.__onProg = f => { bar1.style.width = (f*100).toFixed(0)+'%'; st.textContent = `🎬 Rendering video #${selIdx + 1} · ${Math.round(f*100)}%`; };
+    const { blob, mimeType } = await generateVideo(rows[selIdx]);
+    window.__onProg = null; bar1.style.width = '100%';
+    addVideoResult(blob, mimeType, rows[selIdx], selIdx + 1);
+    if (document.getElementById('autoKV').checked) {
+      const buf = await blob.arrayBuffer();
+      const mime = (mimeType || blob.type || 'video/mp4').split(';')[0];
+      await uploadKV(buf, mime, selIdx + 1);
+    }
+    st.textContent = '✓ Selesai. Encoder: ' + (window.__lastEncoder || '-') + '. Cek di panel Hasil Video.';
+  } catch (err) {
+    recording = false; unlockScreen();
+    st.textContent = '❌ ' + err.message;
+  } finally {
+    setBusy(false);
+  }
+});
+
+const MONTHS = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+const DAY_MS = 864e5;
+function gameDate(r) {
+  const m = String(r.date || '').match(/([A-Za-z]{3,})\.?\s+(\d{1,2})/);
+  if (!m) return null;
+  const mo = MONTHS[m[1].slice(0, 3).toLowerCase()];
+  if (mo == null) return null;
+  const n = new Date(), today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  let d = new Date(today.getFullYear(), mo, +m[2]);
+  if (today - d > 183 * DAY_MS) d = new Date(today.getFullYear() + 1, mo, +m[2]);
+  else if (d - today > 183 * DAY_MS) d = new Date(today.getFullYear() - 1, mo, +m[2]);
+  return d;
+}
+function isExpired(r) {
+  const d = gameDate(r); if (!d) return false;
+  const n = new Date(), today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  return d < today;
+}
+function pruneExpired() {
+  const cb = document.getElementById('dropPast');
+  if (!cb || !cb.checked) return 0;
+  const before = rows.length;
+  rows = rows.filter(r => !isExpired(r));
+  return before - rows.length;
+}
+
+let useMem = false;
+const mem = { meta: new Map(), results: new Map(), resmeta: new Map() };
+let dbp = null;
+function openDB() {
+  if (!dbp) dbp = new Promise((res, rej) => {
+    const rq = indexedDB.open('vidgen_v3', 1);
+    rq.onupgradeneeded = () => { const d = rq.result; ['meta', 'results', 'resmeta'].forEach(n => d.createObjectStore(n)); };
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+  return dbp;
+}
+function idbRun(store, mode, fn) {
+  return openDB().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(store, mode);
+    const rq = fn(tx.objectStore(store));
+    tx.oncomplete = () => res(rq ? rq.result : undefined);
+    tx.onerror = tx.onabort = () => rej(tx.error);
+  }));
+}
+function memWarn() {
+  if (useMem) return;
+  useMem = true;
+  const el = document.getElementById('status2');
+  if (el) el.textContent = '⚠ Auto-save tidak tersedia di browser ini — hasil hanya disimpan di memori.';
+}
+async function sPut(st, k, v) {
+  if (!useMem) { try { await idbRun(st, 'readwrite', o => o.put(v, k)); return; } catch (e) { memWarn(); } }
+  mem[st].set(k, v);
+}
+async function sGet(st, k) {
+  if (!useMem) { try { return await idbRun(st, 'readonly', o => o.get(k)); } catch (e) { memWarn(); } }
+  return mem[st].get(k);
+}
+async function sKeys(st) {
+  if (!useMem) { try { return await idbRun(st, 'readonly', o => o.getAllKeys()); } catch (e) { memWarn(); } }
+  return [...mem[st].keys()];
+}
+async function sClear(st) {
+  if (!useMem) { try { await idbRun(st, 'readwrite', o => o.clear()); return; } catch (e) { memWarn(); } }
+  mem[st].clear();
+}
+async function saveSession() {
+  try { await sPut('meta', 'session', { rows, savedAt: Date.now() }); } catch (e) {}
+}
+async function refreshDone() {
+  doneMeta.clear();
+  const keys = new Set(await sKeys('resmeta'));
+  for (const r of rows) {
+    const k = rowKey(r);
+    if (keys.has(k)) { const m = await sGet('resmeta', k); if (m) doneMeta.set(k, m); }
+  }
+}
+
+function downloadBlob(blob, name) {
+  const u = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = u; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(u), 5000);
+}
+const vidName = (r, i, mime) =>
+  `${String(i + 1).padStart(2, '0')}_${r.homeTeam}_vs_${r.awayTeam}.${(mime || '').includes('mp4') ? 'mp4' : 'webm'}`.replace(/[^\w.-]/g, '_');
+
+// ---- ZIP tanpa kompresi (mp4 sudah terkompres) supaya Download semua = 1 file ----
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function buildZip(files) { // files: [{name, buf}]
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  const d = new Date();
+  const dt = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF;
+  const dd = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+  for (const f of files) {
+    const nm = enc.encode(f.name), data = new Uint8Array(f.buf), crc = crc32(data), size = data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, dt, true); lh.setUint16(12, dd, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, size, true); lh.setUint32(22, size, true); lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+    parts.push(lh.buffer, nm, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, dt, true); ch.setUint16(14, dd, true); ch.setUint32(16, crc, true);
+    ch.setUint32(20, size, true); ch.setUint32(24, size, true); ch.setUint16(28, nm.length, true);
+    ch.setUint32(42, offset, true);
+    central.push(ch.buffer, nm);
+    offset += 30 + nm.length + size;
+  }
+  let csize = 0; central.forEach(x => csize += x.byteLength);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, csize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
+}
+
+function renderDoneList() {
+  const box = document.getElementById('doneList');
+  const items = [];
+  rows.forEach((r, i) => { const m = doneMeta.get(rowKey(r)); if (m) items.push({ r, i, m }); });
+  if (!items.length) { box.innerHTML = ''; return; }
+  const mb = items.reduce((a, x) => a + (x.m.size || 0), 0) / 1048576;
+  const canShare = !!navigator.canShare;
+  box.innerHTML = `
+    <div class="done-head">
+      <button class="sec" data-a="all">⬇ Download semua (${items.length}) .zip</button>
+      <button class="sec" data-a="reset">🗑 Reset hasil tersimpan</button>
+    </div>
+    <div class="status" style="margin-bottom:6px">💾 Tersimpan otomatis · ${items.length}/${rows.length} video · ${mb.toFixed(1)} MB</div>` +
+    items.slice().reverse().map(({ r, i, m }) => `
+    <div class="done-item" data-k="${encodeURIComponent(rowKey(r))}" data-i="${i}">
+      <span class="nm">✓ ${esc(vidName(r, i, m.mime))} · ${((m.size || 0) / 1048576).toFixed(1)} MB</span>
+      <button class="sec" data-a="mp4">⬇ MP4</button>
+      ${canShare ? '<button class="sec" data-a="share">📤</button>' : ''}
+      <button class="sec" data-a="play">▶</button>
+    </div>`).join('');
+}
+async function downloadAllZip(btn) {
+  if (genAllRunning) return;
+  const old = btn.textContent; btn.disabled = true;
+  try {
+    const list = [];
+    rows.forEach((r, i) => { if (doneMeta.has(rowKey(r))) list.push({ r, i }); });
+    const CH = 15, nParts = Math.ceil(list.length / CH); // dipecah per 15 video biar memori HP aman
+    for (let p = 0; p < nParts; p++) {
+      btn.textContent = `⏳ Menyiapkan ZIP ${p + 1}/${nParts}...`;
+      const files = [];
+      for (const { r, i } of list.slice(p * CH, (p + 1) * CH)) {
+        const rec = await sGet('results', rowKey(r));
+        if (rec) files.push({ name: vidName(r, i, rec.mime), buf: rec.buf });
+      }
+      if (!files.length) continue;
+      downloadBlob(buildZip(files), nParts > 1 ? `videos_part${p + 1}_of_${nParts}.zip` : 'all_videos.zip');
+      await new Promise(res => setTimeout(res, 800));
+    }
+  } catch (e) { alert('Gagal: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = old; }
+}
+document.getElementById('doneList').addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-a]'); if (!btn || genAllRunning) return;
+  const a = btn.dataset.a;
+  if (a === 'all') return downloadAllZip(btn);
+  if (a === 'reset') {
+    if (!confirm('Hapus semua hasil video yang tersimpan? Progres Gen All akan mulai dari awal.')) return;
+    await sClear('results'); await sClear('resmeta');
+    doneMeta.clear(); renderTable(); renderDoneList();
+    document.getElementById('status2').textContent = '🗑 Hasil tersimpan dihapus.';
+    return;
+  }
+  const item = btn.closest('.done-item'); if (!item) return;
+  const key = decodeURIComponent(item.dataset.k), i = +item.dataset.i, r = rows[i];
+  try {
+    const rec = await sGet('results', key);
+    if (!rec) throw new Error('Data video tidak ditemukan');
+    const blob = new Blob([rec.buf], { type: rec.mime });
+    const name = vidName(r, i, rec.mime);
+    if (a === 'mp4') downloadBlob(blob, name);
+    else if (a === 'share') {
+      const file = new File([blob], name, { type: rec.mime });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file] }).catch(() => {});
+      else downloadBlob(blob, name);
+    } else if (a === 'play') {
+      const old = item.querySelector('video');
+      if (old) { URL.revokeObjectURL(old.src); old.remove(); return; }
+      const v = document.createElement('video');
+      v.src = URL.createObjectURL(blob);
+      v.controls = true; v.muted = true; v.playsInline = true;
+      item.appendChild(v);
+    }
+  } catch (err) { alert('Gagal: ' + err.message); }
+});
+
+function makeRotator(list) {
+  let bag = [], last = null;
+  return () => {
+    if (!bag.length) {
+      bag = list.slice();
+      for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
+      if (bag.length > 1 && bag[0] === last) bag.push(bag.shift());
+    }
+    last = bag.shift();
+    return last;
+  };
+}
+function rotateVariantsForAll(idx) {
+  const nextTpl = makeRotator(Object.keys(TEMPLATES));
+  const nextBg  = makeRotator(BG_KEYS);
+  const nextPal = makeRotator(PAL_KEYS);
+  (idx || rows.map((_, i) => i)).forEach(i => { const r = rows[i]; r.tpl = nextTpl(); r.bgKey = nextBg(); r.pal = nextPal(); });
+  renderTable();
+}genAllBtn.addEventListener('click', async () => {
+  if (!rows.length || recording || genAllRunning) return;
+  const st = document.getElementById('status2');
+  const bar = document.getElementById('progressBar');
+
+  const dropped = pruneExpired();
+  if (dropped) { selIdx = 0; renderTable(); document.getElementById('rowCount').textContent = rows.length; }
+  if (!rows.length) {
+    document.getElementById('genOne').disabled = true; genAllBtn.disabled = true;
+    st.textContent = `🗑 Semua jadwal sudah lewat tanggal — tidak ada yang digenerate.`;
+    return;
+  }
+
+  await refreshDone();
+  const total = rows.length;
+  const pending = rows.map((_, i) => i).filter(i => !doneMeta.has(rowKey(rows[i])));
+  renderTable(); renderDoneList();
+  // video yang sudah jadi tapi belum berhasil terupload ke KV (gagal sebelumnya) -> kirim ulang
+  const needUp = document.getElementById('autoKV').checked
+    ? rows.map((_, i) => i).filter(i => { const m = doneMeta.get(rowKey(rows[i])); return m && !m.uploaded; })
+    : [];
+  if (!pending.length && !needUp.length) { st.textContent = `✓ Semua ${total} video sudah selesai. Klik "Download semua".`; return; }
+
+  setBusy(true);
+  genAllRunning = true;
+  document.body.classList.add('genning');
+  document.getElementById('previewLabel').textContent = '⏸ Preview dimatikan selama Gen All (biar tidak lag)';
+  rotateVariantsForAll(pending);
+  await saveSession();
+
+  const chips = document.getElementById('chips');
+  chips.innerHTML = rows.map((r, i) => `<span class="chip ${doneMeta.has(rowKey(r)) ? 'ok' : ''}" id="chip${i}">${i+1}</span>`).join('');
+  const setChip = (i, c) => { const el = document.getElementById('chip' + i); if (el) el.className = 'chip ' + c; };
+
+  let finished = total - pending.length, cur = needUp.length ? needUp[0] : pending[0], upFail = 0;
+  needUp.forEach(i => setChip(i, 'warn'));
+  bar.style.width = ((finished / total) * 100).toFixed(1) + '%';
+  try {
+    for (const i of needUp) {
+      cur = i;
+      const key = rowKey(rows[i]);
+      st.textContent = `☁️ Kirim ulang video ${i+1}/${total} ke KV...`;
+      setChip(i, 'up');
+      const rec = await sGet('results', key);
+      const ok = rec ? await uploadKV(rec.buf, rec.mime, i + 1) : false;
+      const m = doneMeta.get(key);
+      if (ok && m) { m.uploaded = true; await sPut('resmeta', key, m); setChip(i, 'ok'); }
+      else { upFail++; setChip(i, 'warn'); }
+    }
+    for (const i of pending) {
+      cur = i;
+      const r = rows[i], key = rowKey(r);
+      const label = `[${TEMPLATES[r.tpl].label} · ${PALETTES[r.pal].label}] ${r.homeTeam} vs ${r.awayTeam}`;
+      setChip(i, 'run');
+      let lastUi = 0;
+      window.__onProg = f => {
+        const now = performance.now();
+        if (f < 1 && f > 0 && now - lastUi < 250) return;
+        lastUi = now;
+        const overall = ((finished + f * 0.95) / total) * 100;
+        bar.style.width = overall.toFixed(1) + '%';
+        st.textContent = `🎬 Video ${i+1}/${total} · ${Math.round(f*100)}% · total ${Math.round(overall)}% — ${label}`;
+      };
+      window.__onProg(0);
+      const { blob, mimeType } = await generateVideo(r);
+      window.__onProg = null;
+
+      st.textContent = `💾 Menyimpan video ${i+1}/${total}...`;
+      const mime = (mimeType || blob.type || 'video/mp4').split(';')[0];
+      const buf = await blob.arrayBuffer();
+      await sPut('results', key, { buf, mime });
+      const meta = { size: buf.byteLength, mime, ts: Date.now() };
+      await sPut('resmeta', key, meta);
+      doneMeta.set(key, meta);
+      finished++;
+      setChip(i, 'ok');
+      renderDoneList();
+      bar.style.width = ((finished / total) * 100).toFixed(1) + '%';
+
+      // ===== AUTO-UPLOAD KE WORKER KV =====
+      if (document.getElementById('autoKV').checked) {
+        setChip(i, 'up');
+        const ok = await uploadKV(buf, mime, i + 1);
+        if (ok) { meta.uploaded = true; await sPut('resmeta', key, meta); setChip(i, 'ok'); }
+        else { upFail++; setChip(i, 'warn'); }
+      }
+
+      await new Promise(res => setTimeout(res, 250));
+    }
+    st.textContent = `✓ ${total} video selesai (tersimpan, siap di-download MP4)!` +
+      (upFail ? ` ⚠ ${upFail} video gagal upload KV (kotak oranye) — klik Gen All lagi untuk kirim ulang.` : '');
+    renderTable();
+  } catch (err) {
+    recording = false; unlockScreen();
+    setChip(cur, 'err');
+    st.textContent = `❌ Berhenti di video ${cur+1}: ${err.message} — progres tersimpan, klik Gen All untuk melanjutkan.`;
+  } finally {
+    window.__onProg = null;
+    genAllRunning = false;
+    document.body.classList.remove('genning');
+    document.getElementById('previewLabel').textContent = '';
+    setBusy(false);
+    renderTable(); renderDoneList();
+    if (rows.length) setPreview(selIdx, false);
+  }
+});
+
+function addVideoResult(blob, mimeType, d, n) {
+  const url = URL.createObjectURL(blob);
+  const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+  const div = document.createElement('div');
+  div.className = 'video-card';
+  const fname = `${String(n).padStart(2,'0')}_${d.homeTeam}_vs_${d.awayTeam}.${ext}`
+                 .replace(/[^\w.-]/g, '_');
+  div.innerHTML = `
+    <video src="${url}" controls muted playsinline preload="metadata"></video>
+    <a href="${url}" download="${esc(fname)}">⬇ ${esc(fname)}</a>`;
+  if (navigator.canShare) {
+    const file = new File([blob], fname, { type: blob.type });
+    if (navigator.canShare({ files: [file] })) {
+      const b = document.createElement('button');
+      b.className = 'sec'; b.textContent = '📤 Simpan / Bagikan';
+      b.style.cssText = 'width:100%;margin-top:6px;padding:10px;font-size:13px;min-height:44px';
+      b.addEventListener('click', () => navigator.share({ files: [file] }).catch(() => {}));
+      div.appendChild(b);
+    }
+  }
+  document.getElementById('videos').prepend(div);
+}
+
+let lastPreview = 0;
+function previewLoop(now) {
+  if (!recording && !genAllRunning && previewData && !document.hidden && now - lastPreview >= 33) {
+    lastPreview = now;
+    const t = ((performance.now() - previewStart) / 1000) % DUR;
+    drawFrame(t, previewData);
+  }
+  requestAnimationFrame(previewLoop);
+}
+requestAnimationFrame(previewLoop);
+
+(async function initResume() {
+  try {
+    const sess = await sGet('meta', 'session');
+    if (!sess || !sess.rows || !sess.rows.length || rows.length) return;
+    const keys = new Set(await sKeys('resmeta'));
+    const done = sess.rows.filter(r => keys.has(rowKey(r))).length;
+    const bar = document.createElement('div');
+    bar.id = 'resumeBar'; bar.className = 'panel';
+    const when = sess.savedAt ? new Date(sess.savedAt).toLocaleString() : '';
+    bar.innerHTML = `
+      <div style="font-size:13px;margin-bottom:8px">💾 Sesi tersimpan: <b>${sess.rows.length}</b> baris · <b>${done}</b> sudah selesai
+        <span style="color:#889"> (${esc(when)})</span></div>
+      <div class="row">
+        <button id="rbGo" style="flex:1">▶ Lanjutkan</button>
+        <button id="rbDel" class="sec" style="flex:1">🗑 Hapus sesi</button>
+      </div>`;
+    const layout = document.querySelector('.layout');
+    layout.parentNode.insertBefore(bar, layout);
+    document.getElementById('rbGo').addEventListener('click', async () => {
+      rows = sess.rows;
+      const dropped = pruneExpired();
+      document.getElementById('shuffle').disabled = !rows.length;
+      document.getElementById('rowCount').textContent = rows.length;
+      document.getElementById('genOne').disabled = !rows.length;
+      document.getElementById('genAll').disabled = !rows.length;
+      await refreshDone();
+      selIdx = 0; renderTable(); renderDoneList();
+      if (rows.length) setPreview(0, false);
+      document.getElementById('status').textContent =
+        `✓ Sesi dipulihkan: ${rows.length} baris, ${doneMeta.size} sudah selesai.` +
+        (dropped ? ` 🗑 ${dropped} baris sudah lewat tanggal → dibuang.` : '') + ' Klik Gen All untuk lanjut.';
+      bar.remove();
+      saveSession();
+    });
+    document.getElementById('rbDel').addEventListener('click', async () => {
+      if (!confirm('Hapus sesi dan semua hasil video tersimpan?')) return;
+      await sClear('meta'); await sClear('results'); await sClear('resmeta');
+      bar.remove();
+    });
+  } catch (e) { console.warn('resume skip', e); }
+})();
+</script>
+</body>
+</html>
