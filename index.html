@@ -1,1 +1,2541 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="color-scheme" content="dark">
+<title>Sports News Video Generator</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0f;color:#fff;padding:12px;
+    padding-top:calc(12px + env(safe-area-inset-top));padding-bottom:calc(12px + env(safe-area-inset-bottom));
+    padding-left:calc(12px + env(safe-area-inset-left));padding-right:calc(12px + env(safe-area-inset-right));
+    min-height:100vh;min-height:100dvh;-webkit-text-size-adjust:100%}
+  .container{max-width:1400px;margin:0 auto;min-width:0;overflow-x:clip}
+  h1{font-size:18px;margin-bottom:12px;line-height:1.3}
+  h1 .grad{background:linear-gradient(90deg,#FF3B30,#FFD60A);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .panel{background:#16161f;border-radius:12px;padding:14px;margin-bottom:12px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button{background:linear-gradient(135deg,#FF3B30,#FF9500);color:#fff;border:0;padding:14px 20px;border-radius:10px;font-weight:700;cursor:pointer;font-size:15px;transition:transform .15s;min-height:48px;flex:1 1 auto;white-space:nowrap;touch-action:manipulation}
+  @media(hover:hover){button:hover:not(:disabled){transform:translateY(-2px)}}
+  button:active:not(:disabled){transform:scale(0.97)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.sec{background:#2a2a3a}
+  input[type=file]{color:#fff;font-size:14px;width:100%;padding:10px;background:#0f0f18;border-radius:8px;border:1px dashed #2a2a3a}
+  input[type=file]::file-selector-button{background:#2a2a3a;color:#fff;border:0;padding:8px 14px;border-radius:6px;font-weight:600;margin-right:10px;cursor:pointer}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:8px 6px;text-align:left;border-bottom:1px solid #2a2a3a;white-space:nowrap}
+  td.wrap{white-space:normal;min-width:130px}
+  th{color:#888;font-weight:600;position:sticky;top:0;background:#16161f;z-index:2}
+  .videos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:10px;margin-top:10px;max-height:60vh;overflow:auto;-webkit-overflow-scrolling:touch}
+  .video-card{background:#0f0f18;border-radius:8px;padding:8px;min-width:0}
+  .video-card video{width:100%;border-radius:6px;display:block;aspect-ratio:9/16;background:#000}
+  .video-card a{color:#FFD60A;font-size:11px;text-decoration:none;display:block;margin-top:6px;word-break:break-all;line-height:1.3}
+  #canvas{width:min(100%,calc(78vh*9/16));width:min(100%,calc(78dvh*9/16));height:auto;aspect-ratio:9/16;background:#000;border-radius:10px;border:2px solid #2a2a3a;display:block;margin:0 auto;box-shadow:0 0 30px rgba(255,59,48,0.15)}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
+  .layout>*,.col-left,.col-right,.panel{min-width:0;max-width:100%}
+  @media(max-width:899px){
+    .col-right{display:contents}
+    .panel-controls{order:1}.col-left{order:2}.panel-videos{order:3}.panel-data{order:4}
+    .layout{gap:0}.videos{max-height:none;overflow:visible}.table-wrap{max-height:50vh}
+  }
+  @media(min-width:900px){
+    .layout{grid-template-columns:320px minmax(0,1fr)}
+    h1{font-size:24px}body{padding:20px}
+    button{flex:0 1 auto;font-size:14px;padding:12px 22px;min-height:auto}
+    .videos{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+    table{font-size:13px}
+  }
+  .done-head{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+  .done-head button{flex:1 1 140px;min-height:40px;padding:8px;font-size:12px}
+  .done-item{display:flex;align-items:center;gap:6px;background:#0f0f18;border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:12px;flex-wrap:wrap}
+  .done-item .nm{flex:1 1 140px;min-width:0;word-break:break-all}
+  .done-item button{min-height:34px;padding:4px 10px;font-size:12px;flex:0 0 auto}
+  .done-item video{width:100%;max-width:220px;aspect-ratio:9/16;border-radius:6px;background:#000}
+  #resumeBar{margin-bottom:12px;border:1px solid #FFD60A}
+  body.genning #canvas{position:absolute!important;width:2px!important;height:2px!important;opacity:0!important;pointer-events:none}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+  .chip{min-width:26px;padding:3px 6px;border-radius:6px;background:#2a2a3a;color:#889;font-size:11px;text-align:center}
+  .chip.run{background:#FFD60A;color:#000;font-weight:700;animation:pulse 1s infinite}
+  .chip.ok{background:#1f8f4a;color:#fff}.chip.err{background:#FF3B30;color:#fff}
+  .chip.up{background:#0ea5e9;color:#fff}.chip.warn{background:#f59e0b;color:#000;font-weight:700}
+  @keyframes pulse{50%{opacity:.55}}
+  .progress{height:8px;background:#2a2a3a;border-radius:4px;overflow:hidden;margin-top:10px}
+  .progress-bar{height:100%;background:linear-gradient(90deg,#FF3B30,#FFD60A);width:0%;transition:width .3s}
+  .status{font-size:13px;color:#aaa;margin-top:8px;line-height:1.4;word-break:break-word}
+  label.chk{font-size:13px;display:flex;gap:6px;align-items:center;cursor:pointer;padding:8px 0;user-select:none}
+  label.chk input{width:18px;height:18px;accent-color:#FF3B30}
+  .table-wrap{max-height:40vh;overflow:auto;border-radius:8px;-webkit-overflow-scrolling:touch;background:#0f0f18}
+  .table-wrap::-webkit-scrollbar{width:6px;height:6px}
+  .table-wrap::-webkit-scrollbar-thumb{background:#2a2a3a;border-radius:3px}
+  td.roll{cursor:pointer;color:#FFD60A;text-decoration:underline dotted;user-select:none}
+  td.roll:active{opacity:.6}
+  tr[data-i]{cursor:pointer}
+  tr[data-i].sel td{background:rgba(255,214,10,.14)}
+  tr[data-i].sel td:first-child{box-shadow:inset 4px 0 0 #FFD60A}
+  .kv-panel{margin-top:6px;padding:10px;background:#0f0f18;border-radius:8px;border:1px solid #2a2a3a}
+  .kv-panel input{width:100%;padding:8px;border-radius:6px;border:1px solid #2a2a3a;background:#16161f;color:#fff;font-size:12px;font-family:monospace;margin-top:6px}
+  .kv-btn{margin-top:6px;margin-right:6px;padding:8px 14px;border-radius:8px;border:1px solid #2a2a3a;background:#23233a;color:#fff;font-size:12px;font-weight:600;cursor:pointer}
+  .kv-del{background:#3a2323}
+  .kv-ok{font-size:12px;color:#6ee7b7;margin-top:6px}
+  .kv-ok span{color:#888;font-family:monospace}
+  .kv-panel #kvStat{font-size:11px;color:#6ee7b7;margin-top:6px;font-family:monospace;min-height:14px;word-break:break-word}
+  #plBox{background:#0f0f18;border:2px solid #a855f7;border-radius:8px;padding:10px;margin-top:12px}
+  #plBox h4{margin:0 0 8px;font-size:13px;color:#c4b5fd}
+  #plBox label{display:block;font-size:11px;color:#aaa;margin-top:8px}
+  #plBox input,#plBox select{width:100%;padding:8px;background:#16161f;color:#fff;border:1px solid #2a2a3a;border-radius:6px;font-size:12px;font-family:monospace;margin-top:4px;box-sizing:border-box}
+  #plBox button{margin-top:8px;padding:10px 14px;border-radius:8px;border:0;font-weight:700;cursor:pointer;font-size:13px;min-height:auto;flex:none}
+  #plGen{background:#7c3aed;color:#fff;width:100%}
+  #plCopy{background:#0ea5e9;color:#fff;display:none;width:100%}
+  #plStat{font-size:11px;color:#c4b5fd;margin-top:6px;font-family:monospace;min-height:14px;word-break:break-word}
+  #plSpeed{display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;margin-top:4px}
+  #plSpeed label{margin-top:4px}
+  #plSpeed input.bad{border-color:#f59e0b}
+  #plWarn{font-size:11px;margin-top:6px;line-height:1.5;font-family:monospace;word-break:break-word}
+  #plWarn .w-fast{color:#fbbf24}#plWarn .w-slow{color:#7dd3fc}#plWarn .w-ok{color:#86efac}
+  #plPreviewWrap{display:none;margin-top:8px}
+  #plPreview{width:100%;height:200px;background:#07070d;color:#c4b5fd;border:1px solid #2a2a3a;border-radius:6px;padding:8px;font-family:monospace;font-size:10px;resize:vertical;box-sizing:border-box}
+  #plPreviewInfo{font-size:10px;color:#888;margin-top:4px;text-align:right}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><span>🏆</span> <span class="grad">Sports News Video Generator · 15s v8</span></h1>
 
+  <div class="panel">
+    <div class="row" style="flex-direction:column;align-items:stretch;">
+      <input type="file" id="fileInput" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+      <button id="loadBtn" disabled>📥 Load Excel</button>
+    </div>
+    <div class="status" id="status">Pilih file JadwalCoy.xlsx dulu bos.</div>
+  </div>
+
+  <div class="layout">
+    <div class="col-left">
+      <div class="panel">
+        <h3 style="font-size:13px;margin-bottom:10px;">📺 Preview</h3>
+        <canvas id="canvas"></canvas>
+        <div class="status" id="previewLabel" style="text-align:center"></div>
+      </div>
+    </div>
+
+    <div class="col-right">
+      <div class="panel panel-controls">
+        <div class="row" style="justify-content:space-between;gap:8px;">
+          <button id="genOne" disabled style="flex:1;">▶ Test video ini</button>
+          <button id="genAll" class="sec" disabled style="flex:1;">🎬 Gen All</button>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <label class="chk"><input type="checkbox" id="addAudio" checked> Beat audio</label>
+          <button id="shuffle" class="sec" disabled style="flex:0 0 auto;min-height:40px;padding:8px 14px;font-size:13px">🔀 Acak ulang</button>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <select id="tplSelect" style="flex:1 1 140px;min-height:40px;background:#0f0f18;color:#fff;border:1px solid #2a2a3a;border-radius:8px;padding:8px;font-size:14px"></select>
+          <label class="chk"><input type="checkbox" id="randBg" checked> Latar acak</label>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <select id="ctaSelect" style="flex:1 1 100%;min-height:40px;background:#0f0f18;color:#fff;border:1px solid #2a2a3a;border-radius:8px;padding:8px;font-size:14px">
+            <option value="all">🌐 Universal: FB · TikTok · IG</option>
+            <option value="fb">📘 Facebook: LINK IN CAPTION</option>
+            <option value="ig">📷 Instagram / TikTok: LINK IN BIO</option>
+            <option value="none">Tanpa teks ajakan</option>
+          </select>
+        </div>
+        <div class="row"><label class="chk"><input type="checkbox" id="safeZone" checked> Safe zone</label></div>
+        <div class="kv-panel">
+          <label class="chk" style="padding:0"><input type="checkbox" id="autoKV" checked> <b>💾 Simpan video ke IndexedDB (untuk player)</b></label>
+          <div class="kv-ok">Video disimpan di browser ini, tanpa server. <span id="bridgeSt"></span></div>
+          <div id="kvStat"></div>
+        </div>
+
+        <div id="plBox">
+          <h4>🎬 Generate Player Script (judul per video)</h4>
+          <label>Caption template (global)</label>
+          <input id="plCap" value="https://sportfusion.online | VISIT : Sport Fusion Web">
+          <label>Delay antar post (detik)</label>
+          <input id="plDelay" type="number" value="10" min="3">
+          <label style="color:#c4b5fd;margin-top:10px">⚡ Pengaturan kecepatan</label>
+          <div id="plSpeed">
+            <div><label>Kecepatan aksi (× jeda; 1 = normal, kecil = ngebut)</label><input id="plFactor" type="number" value="1" step="0.1" min="0.25" max="5"></div>
+            <div><label>Jeda klik Next (ms)</label><input id="plNext" type="number" value="2000" step="100" min="300"></div>
+            <div><label>Maks tunggu upload FB (detik)</label><input id="plUpWait" type="number" value="300" step="10" min="30"></div>
+            <div><label>Timeout ambil video dari tab generator (detik)</label><input id="plDlTo" type="number" value="180" step="10" min="10"></div>
+          </div>
+          <div id="plWarn"></div>
+          <label>Judul per video — sumber</label>
+          <select id="plTitleSrc">
+            <option value="home_away">HomeTeam vs AwayTeam (otomatis)</option>
+            <option value="col">Kolom Excel (video_title)</option>
+          </select>
+          <button id="plGen">⚡ GENERATE SCRIPT</button>
+          <button id="plCopy">📋 COPY SCRIPT</button>
+          <div id="plStat"></div>
+          <div id="plPreviewWrap">
+            <textarea id="plPreview" readonly></textarea>
+            <div id="plPreviewInfo"></div>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:6px;">
+          <select id="palSelect" style="flex:1 1 100%;min-height:40px;background:#0f0f18;color:#fff;border:1px solid #2a2a3a;border-radius:8px;padding:8px;font-size:14px"></select>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <button id="rollTpl" class="sec" style="min-height:40px;padding:8px 14px;font-size:13px">🔄 Roll Template</button>
+          <button id="rollBg" class="sec" style="min-height:40px;padding:8px 14px;font-size:13px">🔄 Roll Latar</button>
+          <button id="rollPal" class="sec" style="min-height:40px;padding:8px 14px;font-size:13px">🎨 Roll Warna</button>
+          <button id="swapTB" class="sec" style="min-height:40px;padding:8px 14px;font-size:13px">↔ Tukar</button>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <label class="chk"><input type="checkbox" id="dropPast" checked> Buang jadwal lewat tanggal</label>
+        </div>
+        <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="status" id="status2"></div>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <div class="panel panel-data">
+        <h3 style="font-size:13px;margin-bottom:8px;">📋 Data (<span id="rowCount">0</span> baris)</h3>
+        <div class="table-wrap">
+          <table id="dataTable">
+            <thead><tr><th>#</th><th>State</th><th>Sport</th><th>Matchup</th><th>Jadwal</th><th>Template 🔄</th><th>Latar 🔄</th><th>Warna 🔄</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel panel-videos">
+        <h3 style="font-size:13px;margin-bottom:8px;">🎥 Hasil Video</h3>
+        <div id="doneList"></div>
+        <div class="videos" id="videos"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@4.3.0/build/mp4-muxer.js"></script>
+<script>
+// ==================== CONFIG ====================
+const W = 1080, H = 1920, FPS = 30, DUR = 15;
+const COVER_FRAMES = 1;
+const canvas = document.getElementById('canvas');
+canvas.width = W; canvas.height = H;
+const ctx = canvas.getContext('2d');
+let rows = [];
+let genAllRunning = false;
+const rowKey = r => [r.state, r.sport, r.homeTeam, r.awayTeam, r.date, r.time].join('|');
+const doneMeta = new Map();
+let previewData = null;
+let selIdx = 0;
+let previewStart = performance.now();
+let recording = false;
+
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ==================== LOAD EXCEL ====================
+const fileInput = document.getElementById('fileInput');
+const loadBtn = document.getElementById('loadBtn');
+
+fileInput.addEventListener('change', e => {
+  loadBtn.disabled = !e.target.files[0];
+  if (e.target.files[0]) loadExcel();
+});
+loadBtn.addEventListener('click', loadExcel);
+
+function loadExcel() {
+  const file = fileInput.files[0];
+  if (!file) return;
+  if (typeof XLSX === 'undefined') {
+    document.getElementById('status').textContent = '❌ Library XLSX gagal dimuat. Cek koneksi lalu refresh.';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onerror = () => { document.getElementById('status').textContent = '❌ Gagal membaca file.'; };
+  reader.onload = ev => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      rows = json.map(parseRow).filter(r => r && r.homeTeam);
+      const dropped = pruneExpired();
+      const nodate = rows.filter(r => !gameDate(r)).length;
+      assignTemplates();
+      document.getElementById('shuffle').disabled = !rows.length;
+      document.getElementById('rowCount').textContent = rows.length;
+      document.getElementById('genOne').disabled = !rows.length;
+      document.getElementById('genAll').disabled = !rows.length;
+      const baseMsg = `✓ ${rows.length} baris dimuat.` +
+        (dropped ? ` 🗑 ${dropped} baris lewat → dibuang.` : '') +
+        (nodate ? ` ⚠ ${nodate} baris tanggal tidak terbaca.` : '');
+      document.getElementById('status').textContent = baseMsg;
+      renderTable();
+      if (rows.length) { selIdx = 0; setPreview(0, false); }
+      const rb = document.getElementById('resumeBar'); if (rb) rb.remove();
+      saveSession();
+      refreshDone().then(() => {
+        renderTable(); renderDoneList();
+        if (doneMeta.size) document.getElementById('status').textContent = baseMsg + ` 💾 ${doneMeta.size} video tersimpan.`;
+      });
+    } catch (err) {
+      document.getElementById('status').textContent = '❌ Error: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ==================== PARSE ROW ====================
+function parseRow(row) {
+  const title = String(row.state_schedule_title || '');
+  const m = title.match(/^(.+?)\s+High School\s+(.+?)\s+Schedule/i);
+  const state = m ? m[1].trim() : '';
+  const sport = m ? m[2].trim() : String(row.sport1 || '').trim();
+  const desc = String(row.game_description || '');
+  const dateMatch = desc.match(/on\s+(\w+),\s+(\w+\s+\d+)\s+@\s+([\d:]+\s*[ap]?m?)/i);
+  const day  = dateMatch ? dateMatch[1] : '';
+  const date = dateMatch ? dateMatch[2] : '';
+  const time = dateMatch ? dateMatch[3].replace(/\s+/g,'').toUpperCase().replace(/([AP])M?$/,'$1M') : '';
+  const locMatch = desc.match(/\(([^)]+)\)/);
+  const location = locMatch ? locMatch[1] : '';
+  return {
+    title, state, sport,
+    homeTeam: String(row.home_team || '').trim(),
+    homeNick: String(row.home_nickname || '').trim(),
+    awayTeam: String(row.away_team || '').trim(),
+    awayNick: String(row.away_nickname || '').trim(),
+    day, date, time, location,
+    hashtags: String(row.hashtag_line || '').split(/[\s,]+/).filter(Boolean),
+    watchLabel: String(row.watch_label || 'WATCH HERE').trim(),
+    watchLink: String(row.watch_link || '').trim(),
+    videoTitle: String(row.video_title || '').trim(),
+  };
+}
+
+function renderTable() {
+  const tb = document.querySelector('#dataTable tbody');
+  if (selIdx >= rows.length) selIdx = 0;
+  tb.innerHTML = rows.map((r, i) => `
+    <tr data-i="${i}" class="${i === selIdx ? 'sel' : ''}">
+      <td>${doneMeta.has(rowKey(r)) ? '✓ ' : ''}${i+1}</td>
+      <td>${esc(r.state)}</td>
+      <td>${esc(r.sport)}</td>
+      <td class="wrap">${esc(r.homeTeam)} vs ${esc(r.awayTeam)}</td>
+      <td>${esc(r.day)} ${esc(r.date)} · ${esc(r.time)}</td>
+      <td class="roll" data-roll="tpl" data-i="${i}">${esc((TEMPLATES[r.tpl]||{}).label)}</td>
+      <td class="roll" data-roll="bg" data-i="${i}">${esc(BG_LABEL[r.bgKey]||'')}</td>
+      <td class="roll" data-roll="pal" data-i="${i}">${esc((PALETTES[r.pal]||{}).label||'Sesuai olahraga')}</td>
+    </tr>`).join('');
+}
+
+// ==================== DRAW HELPERS ====================
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function fitFont(text, weight, maxSize, minSize, maxWidth, family='Arial') {
+  let size = maxSize; ctx.font = `${weight} ${size}px ${family}`;
+  while (ctx.measureText(text).width > maxWidth && size > minSize) { size -= 2; ctx.font = `${weight} ${size}px ${family}`; }
+  return size;
+}
+const clamp01 = t => Math.max(0, Math.min(1, t));
+const easeOut = t => 1 - Math.pow(1-t, 3);
+const hexA = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`; };
+
+// ==================== TEMPLATES ====================
+const ph = (name, start, end) => ({ name, start, end });
+const TEMPLATES = {
+  classic:    { label:'Classic',    phases:[ph('intro',0,1.5), ph('matchup',1.5,5.5), ph('details',5.5,10), ph('hashtags',10,12.5), ph('cta',12.5,15)] },
+  flash:      { label:'Flash',      phases:[ph('flashTeams',0,5), ph('flashInfo',5,9.5), ph('ticker',9.5,12), ph('cta',12,15)] },
+  scoreboard: { label:'Scoreboard', phases:[ph('scoreboard',0,10), ph('hashtags',10,12.5), ph('cta',12.5,15)] },
+  poster:     { label:'Poster',     phases:[ph('poster',0,12.5), ph('cta',12.5,15)] },
+};
+const DRAWERS = { intro:drawIntro, matchup:drawMatchup, details:drawDetails, hashtags:drawHashtags,
+                  cta:drawCTA, scoreboard:drawScoreboard, poster:drawPoster,
+                  flashTeams:drawFlashTeams, flashInfo:drawFlashInfo, ticker:drawTicker };
+
+// ==================== BACKGROUNDS ====================
+function bgClassic(t, theme) {
+  const g = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, H);
+  g.addColorStop(0, theme.bg); g.addColorStop(1, '#000');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = theme.primary + '22'; ctx.lineWidth = 2;
+  const offset = (t * 80) % 100;
+  for (let i = -H; i < W + H; i += 100) { ctx.beginPath(); ctx.moveTo(i + offset, 0); ctx.lineTo(i + offset - H, H); ctx.stroke(); }
+  const v = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.8);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.7)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+}
+function bgFlash(t, th) {
+  ctx.fillStyle = '#07070b'; ctx.fillRect(0, 0, W, H);
+  const off = (t * 240) % 600, skew = H * 0.35;
+  for (let i = -2; i < 6; i++) {
+    const x = i * 300 + off - 300;
+    ctx.fillStyle = i % 2 ? hexA(th.primary, 0.28) : hexA(th.primary, 0.85);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 150, 0); ctx.lineTo(x + 150 - skew, H); ctx.lineTo(x - skew, H); ctx.closePath(); ctx.fill();
+  }
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(0,0,0,0.35)'); g.addColorStop(0.5, 'rgba(0,0,0,0.6)'); g.addColorStop(1, 'rgba(0,0,0,0.85)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+function bgScoreboard(t, th) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#04060c'); g.addColorStop(0.6, '#0a1020'); g.addColorStop(1, th.bg);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  [200, 540, 880].forEach((x, i) => {
+    const sway = Math.sin(t * 0.9 + i * 2) * 120;
+    const c = ctx.createLinearGradient(x, 0, x + sway, H * 0.75);
+    c.addColorStop(0, 'rgba(255,255,255,0.22)'); c.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x + 30, 0); ctx.lineTo(x + sway + 260, H * 0.75); ctx.lineTo(x + sway - 260, H * 0.75); ctx.closePath(); ctx.fill();
+  });
+  ctx.strokeStyle = hexA(th.primary, 0.35); ctx.lineWidth = 3;
+  const hy = H * 0.62;
+  for (let i = 0; i < 9; i++) { const y = hy + Math.pow(i / 8, 2) * (H - hy); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  for (let i = -6; i <= 6; i++) { ctx.beginPath(); ctx.moveTo(W/2 + i * 40, hy); ctx.lineTo(W/2 + i * 260, H); ctx.stroke(); }
+}
+function bgPoster(t, th) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, th.primary); g.addColorStop(0.55, hexA(th.primary, 0.35)); g.addColorStop(1, '#000');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const drift = (t * 20) % 60;
+  for (let y = -60; y < H + 60; y += 60) {
+    const r = 3 + 14 * clamp01(y / H);
+    for (let x = -60; x < W + 60; x += 60) {
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.beginPath(); ctx.arc(x + drift + ((y / 60) % 2) * 30, y + drift, r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+}
+const BG = { classic: bgClassic, flash: bgFlash, scoreboard: bgScoreboard, poster: bgPoster };
+function drawBackground(t, theme, key) { (BG[key] || bgClassic)(t, theme); }
+
+// ==================== DRAWERS ====================
+function flashPlate(y, dir, name, nick, s, theme) {
+  const x = dir * -W * (1 - s), h = 300, sk = 70;
+  ctx.save(); ctx.translate(x, 0);
+  ctx.fillStyle = 'rgba(0,0,0,0.82)';
+  ctx.beginPath(); ctx.moveTo(-100, y - h/2); ctx.lineTo(W + 100 - sk, y - h/2); ctx.lineTo(W + 100, y + h/2); ctx.lineTo(-100 + sk, y + h/2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = theme.accent;
+  const ex = dir > 0 ? 0 : W - 24; ctx.fillRect(ex, y - h/2, 24, h);
+  ctx.textAlign = dir > 0 ? 'left' : 'right'; ctx.textBaseline = 'middle';
+  const tx = dir > 0 ? 70 : W - 70;
+  ctx.fillStyle = '#fff'; fitFont((name||'').toUpperCase(), 'italic 900', 110, 40, W - 200);
+  ctx.fillText((name||'').toUpperCase(), tx, y - 40);
+  ctx.fillStyle = theme.accent; fitFont('"' + (nick||'') + '"', 'italic bold', 58, 28, W - 200);
+  ctx.fillText('"' + (nick||'') + '"', tx, y + 75);
+  ctx.restore();
+}
+function drawFlashTeams(t, d, theme) {
+  const s = easeOut(clamp01(t * 2.2));
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'italic 900 420px Arial'; ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.strokeText('VS', W/2, 960);
+  ctx.restore();
+  flashPlate(620, 1, d.homeTeam, d.homeNick, s, theme);
+  flashPlate(1300, -1, d.awayTeam, d.awayNick, easeOut(clamp01((t - 0.15) * 2.2)), theme);
+}
+function drawFlashInfo(t, d, theme) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const pop = easeOut(clamp01(t * 3));
+  ctx.save(); ctx.translate(W/2, 700); ctx.scale(0.6 + 0.4 * pop, 0.6 + 0.4 * pop); ctx.globalAlpha *= pop;
+  const tm = (d.time||'').toUpperCase();
+  fitFont(tm, 'italic 900', 380, 120, W - 120);
+  ctx.lineWidth = 10; ctx.strokeStyle = '#000'; ctx.strokeText(tm, 0, 0);
+  ctx.fillStyle = '#fff'; ctx.fillText(tm, 0, 0); ctx.restore();
+  const b = easeOut(clamp01((t - 0.2) * 3));
+  ctx.save(); ctx.globalAlpha *= b;
+  ctx.fillStyle = theme.accent; ctx.beginPath();
+  ctx.moveTo(100, 960); ctx.lineTo(W - 60, 960); ctx.lineTo(W - 100, 1100); ctx.lineTo(60, 1100); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#000';
+  const dd = ((d.day||'') + ' ' + (d.date||'')).toUpperCase();
+  fitFont(dd, 'italic 900', 84, 36, W - 260); ctx.fillText(dd, W/2, 1030); ctx.restore();
+  const c = easeOut(clamp01((t - 0.4) * 3));
+  ctx.save(); ctx.globalAlpha *= c;
+  ctx.fillStyle = 'rgba(0,0,0,0.8)'; roundRect(70, 1200, W - 140, 140, 70); ctx.fill();
+  ctx.fillStyle = '#fff';
+  const lc = '📍 ' + (d.location||'').toUpperCase();
+  fitFont(lc, 'bold', 52, 22, W - 260); ctx.fillText(lc, W/2, 1270); ctx.restore();
+}
+function drawTicker(t, d, theme) {
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  const tags = (d.hashtags && d.hashtags.length ? d.hashtags : ['#HighSchoolSports']).slice(0, 6);
+  const txt = tags.join('   ✦   ') + '   ✦   ';
+  ctx.font = 'italic 900 56px Arial';
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.fillText('🔥 TRENDING NOW', W/2, 560);
+  ctx.textAlign = 'left';
+  for (let r = 0; r < 4; r++) {
+    const y = 760 + r * 190, dir = r % 2 ? 1 : -1;
+    ctx.fillStyle = r % 2 ? 'rgba(0,0,0,0.85)' : theme.primary;
+    ctx.fillRect(0, y - 80, W, 160);
+    ctx.fillStyle = r % 2 ? theme.accent : '#fff';
+    ctx.font = 'italic 900 96px Arial';
+    const w = ctx.measureText(txt).width;
+    const off = ((t * 12.5 * 140 * dir) % w + w) % w;
+    for (let x = -off; x < W; x += w) ctx.fillText(txt, x, y);
+  }
+}
+function textLine(txt, y, weight, size, min, color, alpha, x = W/2) {
+  ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = color;
+  fitFont(txt, weight, size, min, W - 160);
+  ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+function drawScoreboard(t, d, theme) {
+  const sec = t * 3;
+  const rv = k => easeOut(clamp01((sec - k * 0.6) * 1.5));
+  textLine('GAME DAY', 330, 'bold', 52, 30, theme.accent, rv(0));
+  const block = (name, nick, y, dir, k) => {
+    const s = rv(k);
+    ctx.save(); ctx.translate(dir * -W * (1 - s), 0);
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    roundRect(60, y - 130, 960, 260, 24); ctx.fill();
+    ctx.fillStyle = theme.primary; ctx.fillRect(60, y - 130, 16, 260);
+    ctx.restore();
+    ctx.save(); ctx.translate(dir * -W * (1 - s), 0);
+    textLine((name||'').toUpperCase(), y - 30, 'bold', 80, 36, '#fff', 1);
+    textLine('"' + (nick||'') + '"', y + 60, 'italic bold', 48, 26, theme.accent, 1);
+    ctx.restore();
+  };
+  block(d.homeTeam, d.homeNick, 560, 1, 1);
+  const mid = rv(2);
+  ctx.save(); ctx.globalAlpha *= mid; ctx.translate(W/2, 960);
+  ctx.fillStyle = theme.primary; roundRect(-260, -110, 520, 220, 30); ctx.fill(); ctx.restore();
+  textLine((d.time||'').toUpperCase(), 940, 'bold', 110, 50, '#fff', mid);
+  textLine('VS', 1030, 'bold', 44, 30, 'rgba(255,255,255,0.8)', mid);
+  block(d.awayTeam, d.awayNick, 1360, -1, 3);
+  textLine(((d.day||'') + ' ' + (d.date||'')).toUpperCase(), 1580, 'bold', 56, 30, '#fff', rv(4));
+  textLine('📍 ' + (d.location||'').toUpperCase(), 1660, 'bold', 40, 22, '#aaa', rv(5));
+}
+function drawPoster(t, d, theme) {
+  const sec = t * 3;
+  const rv = k => easeOut(clamp01((sec - k * 0.35) * 2));
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; roundRect(60, 200, 960, 1500, 36); ctx.fill();
+  ctx.strokeStyle = theme.primary; ctx.lineWidth = 6; roundRect(60, 200, 960, 1500, 36); ctx.stroke();
+  ctx.restore();
+  textLine(theme.icon + ' ' + (d.sport||'').toUpperCase(), 330, 'bold', 84, 40, '#fff', rv(0));
+  textLine((d.state||'').toUpperCase() + ' HIGH SCHOOL', 420, 'bold', 40, 24, theme.accent, rv(1));
+  ctx.fillStyle = theme.primary; ctx.fillRect(180, 490, 720, 6);
+  textLine((d.homeTeam||'').toUpperCase(), 620, 'bold', 76, 34, '#fff', rv(2));
+  textLine('VS', 730, 'bold', 56, 30, theme.primary, rv(3));
+  textLine((d.awayTeam||'').toUpperCase(), 840, 'bold', 76, 34, '#fff', rv(4));
+  ctx.fillStyle = theme.primary; ctx.fillRect(180, 930, 720, 6);
+  textLine((d.day||'').toUpperCase() + ' · ' + (d.date||'').toUpperCase(), 1040, 'bold', 64, 30, theme.accent, rv(5));
+  textLine((d.time||'').toUpperCase(), 1180, 'bold', 150, 60, '#fff', rv(6));
+  textLine('📍 ' + (d.location||'').toUpperCase(), 1310, 'bold', 44, 22, '#aaa', rv(7));
+  const tags = (d.hashtags || []).slice(0, 3).join('  ');
+  textLine(tags, 1500, 'bold', 52, 24, theme.primary, rv(8));
+}
+function drawIntro(t, d, theme) {
+  const pulse = 0.5 + 0.5 * Math.sin(t * 6);
+  ctx.save(); ctx.translate(W/2, 400);
+  ctx.fillStyle = theme.primary; ctx.shadowColor = theme.primary; ctx.shadowBlur = 30 * pulse;
+  roundRect(-200, -45, 400, 90, 12); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 56px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('BREAKING', 0, 0); ctx.restore();
+  ctx.font = '200px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(theme.icon, W/2, 850);
+  ctx.fillStyle = '#fff';
+  const sportTxt = (d.sport || '').toUpperCase();
+  fitFont(sportTxt, 'bold', 100, 40, W - 80); ctx.fillText(sportTxt, W/2, 1150);
+  ctx.fillStyle = theme.accent;
+  const stateTxt = (d.state || '').toUpperCase() + ' HS';
+  fitFont(stateTxt, 'bold', 56, 28, W - 80); ctx.fillText(stateTxt, W/2, 1260);
+}
+function drawMatchup(t, d, theme) {
+  const s = easeOut(t);
+  const homeX = -W * (1 - s), awayX = W * (1 - s);
+  ctx.save(); ctx.translate(W/2, H/2);
+  const vsScale = easeOut(clamp01(t * 1.5)); ctx.scale(vsScale, vsScale);
+  ctx.fillStyle = theme.primary; ctx.shadowColor = theme.primary; ctx.shadowBlur = 40;
+  ctx.beginPath(); ctx.arc(0, 0, 130, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 100px Arial';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('VS', 0, 0); ctx.restore();
+  ctx.save(); ctx.translate(W/2 + homeX, H/2 - 350); drawTeamBlock(d.homeTeam, d.homeNick, theme, 1); ctx.restore();
+  ctx.save(); ctx.translate(W/2 + awayX, H/2 + 350); drawTeamBlock(d.awayTeam, d.awayNick, theme, -1); ctx.restore();
+}
+function drawTeamBlock(team, nick, theme, dir) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  let size = 90; ctx.font = `bold ${size}px Arial`;
+  while (ctx.measureText((team||'').toUpperCase()).width > W - 80 && size > 40) { size -= 4; ctx.font = `bold ${size}px Arial`; }
+  ctx.fillStyle = '#fff'; ctx.shadowColor = '#000'; ctx.shadowBlur = 10;
+  ctx.fillText((team||'').toUpperCase(), 0, 0); ctx.shadowBlur = 0;
+  ctx.fillStyle = theme.accent;
+  const nickTxt = '"' + (nick||'') + '"';
+  fitFont(nickTxt, 'italic bold', 56, 28, W - 80); ctx.fillText(nickTxt, 0, dir * 90);
+  ctx.fillStyle = theme.primary; ctx.fillRect(-250, dir * 130, 500, 6);
+}
+function drawDetails(t, d, theme) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = theme.accent; ctx.font = 'bold 48px Arial';
+  ctx.fillText('MATCH DETAILS', W/2, 500);
+  const s1 = easeOut(clamp01(t*2));
+  ctx.save(); ctx.globalAlpha = s1; ctx.translate(W/2, 680);
+  ctx.fillStyle = '#fff'; const dayTxt = (d.day||'').toUpperCase();
+  fitFont(dayTxt, 'bold', 140, 60, W - 80); ctx.fillText(dayTxt, 0, 0); ctx.restore();
+  const s2 = easeOut(clamp01((t-0.2)*2));
+  ctx.save(); ctx.globalAlpha = s2; ctx.translate(W/2, 830);
+  ctx.fillStyle = theme.primary; const dateTxt = (d.date||'').toUpperCase();
+  fitFont(dateTxt, 'bold', 100, 50, W - 80); ctx.fillText(dateTxt, 0, 0); ctx.restore();
+  const s3 = easeOut(clamp01((t-0.4)*2));
+  ctx.save(); ctx.globalAlpha = s3; ctx.translate(W/2, 1030);
+  ctx.fillStyle = theme.primary; roundRect(-180, -60, 360, 120, 20); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 80px Arial';
+  ctx.fillText((d.time||'').toUpperCase(), 0, 0); ctx.restore();
+  const s4 = easeOut(clamp01((t-0.6)*2));
+  ctx.save(); ctx.globalAlpha = s4; ctx.translate(W/2, 1250);
+  ctx.fillStyle = '#aaa'; ctx.font = '32px Arial';
+  ctx.fillText('📍 LOCATION', 0, -50);
+  ctx.fillStyle = '#fff'; const locTxt = (d.location||'').toUpperCase();
+  fitFont(locTxt, 'bold', 52, 24, W - 80); ctx.fillText(locTxt, 0, 30); ctx.restore();
+}
+function drawHashtags(t, d, theme) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = theme.accent; ctx.font = 'bold 56px Arial';
+  ctx.fillText('TRENDING NOW', W/2, 500);
+  const tags = d.hashtags.slice(0, 6);
+  const startY = 720, spacing = 130;
+  tags.forEach((tag, i) => {
+    const appear = clamp01((t - i * 0.12) * 3);
+    const s = easeOut(appear);
+    ctx.save(); ctx.translate(W/2, startY + i * spacing); ctx.scale(s, s); ctx.globalAlpha = appear;
+    ctx.fillStyle = i % 2 === 0 ? theme.primary : theme.accent;
+    fitFont(tag, 'bold', 72, 28, W - 80);
+    ctx.shadowColor = theme.primary; ctx.shadowBlur = 20;
+    ctx.fillText(tag, 0, 0); ctx.shadowBlur = 0; ctx.restore();
+  });
+}
+const safeChk = document.getElementById('safeZone');
+const CTA_OPTS = { all:'🔗 LINK IN CAPTION / BIO', fb:'👇 LINK IN CAPTION', ig:'👆 TAP LINK IN BIO', none:'' };
+function drawCTA(t, d, theme) {
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const pulse = 0.5 + 0.5 * Math.sin(t * 8);
+  const s = 1 + 0.05 * pulse * easeOut(clamp01(t*2));
+  ctx.save(); ctx.translate(W/2, H/2 - 150); ctx.scale(s, s);
+  ctx.fillStyle = theme.primary; ctx.shadowColor = theme.primary; ctx.shadowBlur = 50;
+  roundRect(-400, -100, 800, 200, 30); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff'; fitFont('▶ ' + (d.watchLabel || 'WATCH HERE'), 'bold', 90, 36, 740);
+  ctx.fillText('▶ ' + (d.watchLabel || 'WATCH HERE'), 0, 0); ctx.restore();
+  let linkSize = 52; ctx.font = `bold ${linkSize}px Arial`;
+  while (ctx.measureText(d.watchLink || '').width > W - 80 && linkSize > 22) { linkSize -= 2; ctx.font = `bold ${linkSize}px Arial`; }
+  ctx.fillStyle = theme.accent; ctx.fillText(d.watchLink || '', W/2, H/2 + 120);
+  const sel = document.getElementById('ctaSelect').value;
+  const hint = sel in CTA_OPTS ? CTA_OPTS[sel] : CTA_OPTS.all;
+  if (hint) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'; roundRect(W/2 - 280, H/2 + 200, 560, 80, 20); ctx.fill();
+    ctx.fillStyle = '#fff'; fitFont(hint, 'bold', 38, 22, 500);
+    ctx.fillText(hint, W/2, H/2 + 240);
+  }
+}
+function drawBars(t, d, theme) {
+  const k = d.tpl || 'classic';
+  const st = (d.state || '').toUpperCase();
+  ctx.textBaseline = 'middle';
+  if (k === 'poster') {
+    ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = 'bold 30px Arial'; ctx.fillText('SPORTS FUSION  ·  ' + st, W/2, 90);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = 'bold 24px Arial';
+    ctx.fillText('LIVE • HIGH SCHOOL SPORTS', W/2, H - 60); return;
+  }
+  if (k === 'flash') {
+    ctx.fillStyle = theme.primary; ctx.fillRect(0, 0, W, 100);
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 100, W, 6);
+    ctx.fillStyle = '#fff'; ctx.font = 'italic 900 38px Arial';
+    ctx.textAlign = 'left'; ctx.fillText('⚡ SPORTS FUSION', 40, 52);
+    ctx.textAlign = 'right'; ctx.fillText(st, W - 40, 52);
+    ctx.fillStyle = '#000'; ctx.fillRect(0, H - 80, W, 80);
+    ctx.fillStyle = theme.primary; ctx.fillRect(0, H - 80, W, 6);
+    ctx.fillStyle = theme.accent; ctx.font = 'italic bold 26px Arial'; ctx.textAlign = 'center';
+    ctx.fillText('LIVE • HIGH SCHOOL SPORTS', W/2, H - 38); return;
+  }
+  if (k === 'scoreboard') {
+    ctx.fillStyle = '#05070d'; ctx.fillRect(0, 0, W, 110);
+    ctx.fillStyle = theme.accent; ctx.fillRect(0, 110, W, 4);
+    ctx.font = 'bold 34px "Courier New", monospace';
+    ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText('■ SPORTS FUSION', 40, 56);
+    ctx.textAlign = 'right'; ctx.fillStyle = theme.accent; ctx.fillText(st, W - 40, 56);
+    ctx.fillStyle = '#05070d'; ctx.fillRect(0, H - 90, W, 90);
+    ctx.fillStyle = theme.accent; ctx.fillRect(0, H - 94, W, 4);
+    ctx.font = 'bold 28px "Courier New", monospace'; ctx.textAlign = 'center';
+    ctx.fillStyle = theme.accent; ctx.fillText('● LIVE  HIGH SCHOOL SPORTS', W/2, H - 45); return;
+  }
+  ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0, 0, W, 100);
+  ctx.fillStyle = theme.primary; ctx.fillRect(0, 96, W, 4);
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 32px Arial';
+  ctx.textAlign = 'left'; ctx.fillText('● SPORTS FUSION', 40, 50);
+  ctx.textAlign = 'right'; ctx.fillStyle = theme.accent; ctx.fillText(st, W - 40, 50);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0, H - 80, W, 80);
+  ctx.fillStyle = theme.primary; ctx.fillRect(0, H - 84, W, 4);
+  ctx.fillStyle = '#aaa'; ctx.font = 'bold 24px Arial'; ctx.textAlign = 'center';
+  ctx.fillText('LIVE • HIGH SCHOOL SPORTS', W/2, H - 40);
+}
+
+// ==================== FRAME DISPATCH ====================
+const COVER_BY_TPL = {
+  classic:['matchup', 0.97], flash:['flashTeams', 0.9], scoreboard:['scoreboard', 0.5], poster:['poster', 0.5],
+};
+function drawFrame(t, d, cover) {
+  const tplKey = TEMPLATES[d.tpl] ? d.tpl : 'classic';
+  const tpl = TEMPLATES[tplKey];
+  if (cover) {
+    const c = COVER_BY_TPL[tplKey];
+    const cp = c && tpl.phases.find(x => x.name === c[0]);
+    if (cp) t = cp.start + c[1] * (cp.end - cp.start); else cover = false;
+  }
+  t = Math.min(t, DUR - 0.001);
+  const theme = getTheme(d);
+  drawBackground(t, theme, d.bgKey || d.tpl);
+  let phase = tpl.phases[0];
+  for (const p of tpl.phases) if (t >= p.start && t < p.end) phase = p;
+  const localT = clamp01((t - phase.start) / (phase.end - phase.start));
+  const fadeIn  = clamp01((t - phase.start) / 0.3);
+  const fadeOut = 1 - clamp01((t - (phase.end - 0.3)) / 0.3);
+  const alpha   = cover ? 1 : Math.min(fadeIn, fadeOut);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  if (safeChk.checked) { ctx.translate(W/2, 260); ctx.scale(0.86, 0.86); ctx.translate(-W/2, -260); }
+  DRAWERS[phase.name](phase.name === 'intro' ? t : localT, d, theme);
+  ctx.restore();
+  drawBars(t, d, theme);
+  drawInfoChip(t, d, theme);
+}
+function drawInfoChip(t, d, th) {
+  const dt = (d.date || '').split(/\s+/);
+  const parts = [(d.day || '').slice(0, 3).toUpperCase(), (dt[0] || '').slice(0, 3).toUpperCase() + (dt[1] ? ' ' + dt[1] : ''), (d.time || '').toUpperCase()]
+    .map(x => x.trim()).filter(Boolean);
+  if (!parts.length) return;
+  const cy = safeChk.checked ? 150 : 128;
+  const txt = parts.join('  ·  ');
+  ctx.save();
+  ctx.globalAlpha = clamp01((t - 0.3) / 0.4);
+  ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = Math.min(W - 120, ctx.measureText(txt).width + 90);
+  ctx.fillStyle = 'rgba(0,0,0,0.78)'; roundRect(W/2 - w/2, cy, w, 64, 32); ctx.fill();
+  ctx.strokeStyle = th.accent; ctx.lineWidth = 3; roundRect(W/2 - w/2, cy, w, 64, 32); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.fillText(txt, W/2, cy + 33);
+  ctx.restore();
+}
+
+// ==================== PALETTES + SPORTS ====================
+const BG_KEYS = ['classic','flash','scoreboard','poster'];
+const BG_LABEL = { classic:'Diagonal', flash:'Strobe', scoreboard:'Lampu Stadion', poster:'Halftone' };
+
+const PALETTES = {
+  merah:  { label:'Merah',  primary:'#FF3B30', accent:'#FFD60A', bg:'#1a0505' },
+  hijau:  { label:'Hijau',  primary:'#34C759', accent:'#FFFFFF', bg:'#051a08' },
+  oranye: { label:'Oranye', primary:'#FF9500', accent:'#FFFFFF', bg:'#1a0f05' },
+  biru:   { label:'Biru',   primary:'#0A84FF', accent:'#FFFFFF', bg:'#05101a' },
+  ungu:   { label:'Ungu',   primary:'#AF52DE', accent:'#FFD60A', bg:'#12051a' },
+  pink:   { label:'Pink',   primary:'#FF2D92', accent:'#FFFFFF', bg:'#1a0510' },
+  toska:  { label:'Toska',  primary:'#00A896', accent:'#FFE066', bg:'#031a17' },
+  indigo: { label:'Indigo', primary:'#5E5CE6', accent:'#FFD60A', bg:'#08081f' },
+};
+const PAL_KEYS = Object.keys(PALETTES);
+const SPORTS = [
+  ['water polo','🤽','biru'], ['beach volleyball','🏐','oranye'], ['flag football','🏈','merah'],
+  ['football','🏈','merah'], ['futsal','⚽','hijau'], ['soccer','⚽','hijau'],
+  ['volleyball','🏐','oranye'], ['basketball','🏀','oranye'], ['baseball','⚾','indigo'],
+  ['softball','🥎','pink'], ['lacrosse','🥍','toska'], ['field hockey','🏑','hijau'],
+  ['ice hockey','🏒','biru'], ['hockey','🏒','toska'], ['rugby','🏉','indigo'],
+  ['tennis','🎾','toska'], ['badminton','🏸','toska'], ['golf','⛳','hijau'],
+];
+function sportInfo(sp) {
+  const s = (sp || '').toLowerCase();
+  for (const [k, icon, pal] of SPORTS) if (s.includes(k)) return { icon, pal };
+  let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { icon: '🏆', pal: PAL_KEYS[h % PAL_KEYS.length] };
+}
+function sportPal(sp) { return sportInfo(sp).pal; }
+function getTheme(d) {
+  const info = sportInfo(d.sport);
+  const key = d.pal && PALETTES[d.pal] ? d.pal : info.pal;
+  return Object.assign({ icon: info.icon }, PALETTES[key]);
+}
+
+// ==================== UI WIRING ====================
+const tplSelect = document.getElementById('tplSelect');
+tplSelect.innerHTML = '<option value="random">🎲 Template acak</option>' +
+  Object.keys(TEMPLATES).map(k => `<option value="${k}">${TEMPLATES[k].label}</option>`).join('');
+function reapplyVariants() { if (!rows.length) return; assignTemplates(); saveSession(); renderTable(); setPreview(selIdx, false); }
+tplSelect.addEventListener('change', reapplyVariants);
+document.getElementById('randBg').addEventListener('change', reapplyVariants);
+
+const palSelect = document.getElementById('palSelect');
+palSelect.innerHTML = '<option value="random">🎨 Warna acak</option><option value="sport">Warna sesuai olahraga</option>' +
+  PAL_KEYS.map(k => `<option value="${k}">${PALETTES[k].label}</option>`).join('');
+palSelect.addEventListener('change', () => reapplyVariants());
+
+function assignTemplates() {
+  const keys = Object.keys(TEMPLATES);
+  const pick = tplSelect.value, rb = document.getElementById('randBg').checked;
+  let prev = null, prevBg = null, prevPal = null;
+  const pp = palSelect.value;
+  rows.forEach(r => {
+    let k;
+    if (pick !== 'random' && TEMPLATES[pick]) k = pick;
+    else do { k = keys[Math.floor(Math.random() * keys.length)]; } while (k === prev && keys.length > 1);
+    r.tpl = k; prev = k;
+    if (pp === 'random') { let c; do { c = PAL_KEYS[Math.floor(Math.random() * PAL_KEYS.length)]; } while (c === prevPal); r.pal = c; prevPal = c; }
+    else if (pp === 'sport') r.pal = null;
+    else r.pal = pp;
+    if (rb) { let b; do { b = BG_KEYS[Math.floor(Math.random() * BG_KEYS.length)]; } while (b === prevBg); r.bgKey = b; prevBg = b; }
+    else r.bgKey = k;
+  });
+}
+const nextOf = (list, cur) => list[(list.indexOf(cur) + 1) % list.length];
+function afterRoll(i) { saveSession(); renderTable(); setPreview(i == null ? selIdx : i, i != null); }
+document.getElementById('rollTpl').addEventListener('click', () => {
+  if (!rows.length || recording) return;
+  const keys = Object.keys(TEMPLATES);
+  rows.forEach(r => { const wasNative = r.bgKey === r.tpl; r.tpl = nextOf(keys, r.tpl); if (wasNative) r.bgKey = r.tpl; });
+  afterRoll();
+});
+document.getElementById('rollBg').addEventListener('click', () => {
+  if (!rows.length || recording) return;
+  rows.forEach(r => { r.bgKey = nextOf(BG_KEYS, r.bgKey); });
+  afterRoll();
+});
+document.getElementById('rollPal').addEventListener('click', () => {
+  if (!rows.length || recording) return;
+  rows.forEach(r => { r.pal = nextOf(PAL_KEYS, r.pal && PALETTES[r.pal] ? r.pal : sportPal(r.sport)); });
+  afterRoll();
+});
+document.getElementById('swapTB').addEventListener('click', () => {
+  if (!rows.length || recording) return;
+  const t = rows.map(r => r.tpl), b = rows.map(r => r.bgKey), n = rows.length;
+  if (n > 1) rows.forEach((r, i) => { r.tpl = t[(i + 1) % n]; r.bgKey = b[(i - 1 + n) % n]; });
+  afterRoll();
+});
+document.querySelector('#dataTable tbody').addEventListener('click', e => {
+  if (recording) return;
+  const td = e.target.closest('td.roll');
+  if (!td) { const tr = e.target.closest('tr[data-i]'); if (tr) setPreview(+tr.dataset.i, true); return; }
+  const i = +td.dataset.i, r = rows[i]; if (!r) return;
+  if (td.dataset.roll === 'tpl') r.tpl = nextOf(Object.keys(TEMPLATES), r.tpl);
+  else if (td.dataset.roll === 'pal') r.pal = nextOf(PAL_KEYS, r.pal && PALETTES[r.pal] ? r.pal : sportPal(r.sport));
+  else r.bgKey = nextOf(BG_KEYS, r.bgKey);
+  afterRoll(i);
+});
+
+function setPreview(i, scroll) {
+  if (!rows.length) return;
+  selIdx = Math.max(0, Math.min(rows.length - 1, i));
+  previewData = rows[selIdx]; previewStart = performance.now();
+  const r = rows[selIdx];
+  document.getElementById('previewLabel').textContent = `#${selIdx + 1}/${rows.length} · ${r.homeTeam} vs ${r.awayTeam}`;
+  document.querySelectorAll('#dataTable tbody tr').forEach(tr => tr.classList.toggle('sel', +tr.dataset.i === selIdx));
+  if (scroll) { const b = canvas.getBoundingClientRect(); if (b.top < 0 || b.bottom > window.innerHeight) canvas.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+let wakeLock = null;
+async function lockScreen() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {} }
+function unlockScreen() { try { wakeLock && wakeLock.release(); } catch (e) {} wakeLock = null; }
+
+// ==================== PERSISTENCE ====================
+const MONTHS = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+const DAY_MS = 864e5;
+function gameDate(r) {
+  const m = String(r.date || '').match(/([A-Za-z]{3,})\.?\s+(\d{1,2})/);
+  if (!m) return null;
+  const mo = MONTHS[m[1].slice(0, 3).toLowerCase()];
+  if (mo == null) return null;
+  const n = new Date(), today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  let d = new Date(today.getFullYear(), mo, +m[2]);
+  if (today - d > 183 * DAY_MS) d = new Date(today.getFullYear() + 1, mo, +m[2]);
+  else if (d - today > 183 * DAY_MS) d = new Date(today.getFullYear() - 1, mo, +m[2]);
+  return d;
+}
+function isExpired(r) { const d = gameDate(r); if (!d) return false; const n = new Date(), today = new Date(n.getFullYear(), n.getMonth(), n.getDate()); return d < today; }
+function pruneExpired() { const cb = document.getElementById('dropPast'); if (!cb || !cb.checked) return 0; const b = rows.length; rows = rows.filter(r => !isExpired(r)); return b - rows.length; }
+
+let useMem = false;
+const mem = { meta: new Map(), results: new Map(), resmeta: new Map() };
+let dbp = null;
+function openDB() {
+  if (!dbp) dbp = new Promise((res, rej) => {
+    const rq = indexedDB.open('vidgen_v3', 1);
+    rq.onupgradeneeded = () => { const d = rq.result; ['meta', 'results', 'resmeta'].forEach(n => d.createObjectStore(n)); };
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+  return dbp;
+}
+function idbRun(store, mode, fn) {
+  return openDB().then(d => new Promise((res, rej) => {
+    const tx = d.transaction(store, mode); const rq = fn(tx.objectStore(store));
+    tx.oncomplete = () => res(rq ? rq.result : undefined); tx.onerror = tx.onabort = () => rej(tx.error);
+  }));
+}
+function memWarn() { if (useMem) return; useMem = true; }
+async function sPut(st, k, v) { if (!useMem) { try { await idbRun(st, 'readwrite', o => o.put(v, k)); return; } catch (e) { memWarn(); } } mem[st].set(k, v); }
+async function sGet(st, k) { if (!useMem) { try { return await idbRun(st, 'readonly', o => o.get(k)); } catch (e) { memWarn(); } } return mem[st].get(k); }
+async function sKeys(st) { if (!useMem) { try { return await idbRun(st, 'readonly', o => o.getAllKeys()); } catch (e) { memWarn(); } } return [...mem[st].keys()]; }
+async function sClear(st) { if (!useMem) { try { await idbRun(st, 'readwrite', o => o.clear()); return; } catch (e) { memWarn(); } } mem[st].clear(); }
+async function saveSession() { try { await sPut('meta', 'session', { rows, savedAt: Date.now() }); } catch (e) {} }
+async function refreshDone() {
+  doneMeta.clear();
+  const keys = new Set(await sKeys('resmeta'));
+  for (const r of rows) { const k = rowKey(r); if (keys.has(k)) { const m = await sGet('resmeta', k); if (m) doneMeta.set(k, m); } }
+}
+function downloadBlob(blob, name) { const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(u), 5000); }
+const vidName = (r, i, mime) => `${String(i + 1).padStart(2, '0')}_${r.homeTeam}_vs_${r.awayTeam}.${(mime || '').includes('mp4') ? 'mp4' : 'webm'}`.replace(/[^\w.-]/g, '_');
+
+// ==================== ZIP ====================
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u8) { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRC_T[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function buildZip(files) {
+  const enc = new TextEncoder(), parts = [], central = []; let offset = 0;
+  const d = new Date(); const dt = ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF; const dd = (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF;
+  for (const f of files) {
+    const nm = enc.encode(f.name), data = new Uint8Array(f.buf), crc = crc32(data), size = data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true); lh.setUint16(10, dt, true); lh.setUint16(12, dd, true); lh.setUint32(14, crc, true); lh.setUint32(18, size, true); lh.setUint32(22, size, true); lh.setUint16(26, nm.length, true); lh.setUint16(28, 0, true);
+    parts.push(lh.buffer, nm, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true); ch.setUint16(12, dt, true); ch.setUint16(14, dd, true); ch.setUint32(16, crc, true); ch.setUint32(20, size, true); ch.setUint32(24, size, true); ch.setUint16(28, nm.length, true); ch.setUint32(42, offset, true);
+    central.push(ch.buffer, nm); offset += 30 + nm.length + size;
+  }
+  let csize = 0; central.forEach(x => csize += x.byteLength);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, csize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, end.buffer], { type: 'application/zip' });
+}
+
+function renderDoneList() {
+  const box = document.getElementById('doneList');
+  const items = [];
+  rows.forEach((r, i) => { const m = doneMeta.get(rowKey(r)); if (m) items.push({ r, i, m }); });
+  if (!items.length) { box.innerHTML = ''; return; }
+  const mb = items.reduce((a, x) => a + (x.m.size || 0), 0) / 1048576;
+  const canShare = !!navigator.canShare;
+  box.innerHTML = `<div class="done-head"><button class="sec" data-a="all">⬇ Download semua (${items.length}) .zip</button><button class="sec" data-a="reset">🗑 Reset</button></div>` +
+    `<div class="status" style="margin-bottom:6px">💾 ${items.length}/${rows.length} video · ${mb.toFixed(1)} MB</div>` +
+    items.slice().reverse().map(({ r, i, m }) => `
+    <div class="done-item" data-k="${encodeURIComponent(rowKey(r))}" data-i="${i}">
+      <span class="nm">✓ ${esc(vidName(r, i, m.mime))} · ${((m.size || 0) / 1048576).toFixed(1)} MB</span>
+      <button class="sec" data-a="mp4">⬇ MP4</button>
+      ${canShare ? '<button class="sec" data-a="share">📤</button>' : ''}
+      <button class="sec" data-a="play">▶</button>
+    </div>`).join('');
+}
+async function downloadAllZip(btn) {
+  if (genAllRunning) return;
+  const old = btn.textContent; btn.disabled = true;
+  try {
+    const list = []; rows.forEach((r, i) => { if (doneMeta.has(rowKey(r))) list.push({ r, i }); });
+    const CH = 15, nParts = Math.ceil(list.length / CH);
+    for (let p = 0; p < nParts; p++) {
+      btn.textContent = `⏳ ZIP ${p + 1}/${nParts}...`;
+      const files = [];
+      for (const { r, i } of list.slice(p * CH, (p + 1) * CH)) { const rec = await sGet('results', rowKey(r)); if (rec) files.push({ name: vidName(r, i, rec.mime), buf: rec.buf }); }
+      if (!files.length) continue;
+      downloadBlob(buildZip(files), nParts > 1 ? `videos_part${p + 1}_of_${nParts}.zip` : 'all_videos.zip');
+      await new Promise(res => setTimeout(res, 800));
+    }
+  } catch (e) { alert('Gagal: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = old; }
+}
+document.getElementById('doneList').addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-a]'); if (!btn || genAllRunning) return;
+  const a = btn.dataset.a;
+  if (a === 'all') return downloadAllZip(btn);
+  if (a === 'reset') { if (!confirm('Hapus semua hasil?')) return; await sClear('results'); await sClear('resmeta'); doneMeta.clear(); renderTable(); renderDoneList(); return; }
+  const item = btn.closest('.done-item'); if (!item) return;
+  const key = decodeURIComponent(item.dataset.k), i = +item.dataset.i, r = rows[i];
+  try {
+    const rec = await sGet('results', key);
+    if (!rec) throw new Error('Data video tidak ditemukan');
+    const blob = new Blob([rec.buf], { type: rec.mime });
+    const name = vidName(r, i, rec.mime);
+    if (a === 'mp4') downloadBlob(blob, name);
+    else if (a === 'share') { const file = new File([blob], name, { type: rec.mime }); if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file] }).catch(() => {}); else downloadBlob(blob, name); }
+    else if (a === 'play') { const old = item.querySelector('video'); if (old) { URL.revokeObjectURL(old.src); old.remove(); return; } const v = document.createElement('video'); v.src = URL.createObjectURL(blob); v.controls = true; v.muted = true; v.playsInline = true; item.appendChild(v); }
+  } catch (err) { alert('Gagal: ' + err.message); }
+});
+
+function addVideoResult(blob, mimeType, d, n) {
+  const url = URL.createObjectURL(blob);
+  const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+  const div = document.createElement('div');
+  div.className = 'video-card';
+  const fname = `${String(n).padStart(2,'0')}_${d.homeTeam}_vs_${d.awayTeam}.${ext}`.replace(/[^\w.-]/g, '_');
+  div.innerHTML = `<video src="${url}" controls muted playsinline preload="metadata"></video><a href="${url}" download="${esc(fname)}">⬇ ${esc(fname)}</a>`;
+  document.getElementById('videos').prepend(div);
+}
+
+let lastPreview = 0;
+function previewLoop(now) {
+  if (!recording && !genAllRunning && previewData && !document.hidden && now - lastPreview >= 33) {
+    lastPreview = now;
+    const t = ((performance.now() - previewStart) / 1000) % DUR;
+    drawFrame(t, previewData);
+  }
+  requestAnimationFrame(previewLoop);
+}
+requestAnimationFrame(previewLoop);
+</script>
+<script>
+// ==================== WebCodecs ====================
+const _wait = ms => new Promise(r => setTimeout(r, ms));
+async function pickAvcCodec() {
+  for (const c of ['avc1.640028', 'avc1.4d0028', 'avc1.64002A', 'avc1.42002A']) {
+    try { const s = await VideoEncoder.isConfigSupported({ codec: c, width: W, height: H, bitrate: 4_000_000, framerate: FPS, avc: { format: 'avc' } }); if (s && s.supported) return c; } catch (e) {}
+  }
+  return null;
+}
+async function renderBeatAudio() {
+  const SR = 44100;
+  const oc = new OfflineAudioContext(1, SR * DUR, SR);
+  const master = oc.createGain(); master.gain.value = 0.18; master.connect(oc.destination);
+  for (let i = 0; i < DUR * 2; i++) {
+    const t = i * 0.5;
+    const osc = oc.createOscillator(), g = oc.createGain();
+    osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+    g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    osc.connect(g).connect(master); osc.start(t); osc.stop(t + 0.25);
+  }
+  const noise = oc.createBufferSource();
+  const buf = oc.createBuffer(1, SR * 2, SR);
+  const nd = buf.getChannelData(0);
+  for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  noise.buffer = buf;
+  const ng = oc.createGain(); ng.gain.setValueAtTime(0, 0); ng.gain.linearRampToValueAtTime(0.3, 0.4); ng.gain.linearRampToValueAtTime(0, 1.5);
+  const bp = oc.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 800;
+  noise.connect(bp).connect(ng).connect(master); noise.start(0); noise.stop(2);
+  return await oc.startRendering();
+}
+async function generateVideoWebCodecs(d) {
+  if (typeof VideoEncoder === 'undefined' || typeof VideoFrame === 'undefined') throw new Error('WebCodecs tidak tersedia');
+  if (!window.Mp4Muxer) throw new Error('mp4-muxer gagal dimuat');
+  const codec = await pickAvcCodec();
+  if (!codec) throw new Error('Encoder H.264 tidak didukung');
+  let audioBuf = null, audioCfg = null;
+  if (document.getElementById('addAudio').checked && typeof AudioEncoder !== 'undefined' && typeof AudioData !== 'undefined') {
+    try { const cfg = { codec: 'mp4a.40.2', sampleRate: 44100, numberOfChannels: 1, bitrate: 96000 }; const sup = await AudioEncoder.isConfigSupported(cfg); if (sup && sup.supported) { audioCfg = cfg; audioBuf = await renderBeatAudio(); } } catch (e) {}
+  }
+  recording = true; await lockScreen();
+  let venc = null, aenc = null;
+  try {
+    const target = new Mp4Muxer.ArrayBufferTarget();
+    const muxer = new Mp4Muxer.Muxer(Object.assign({ target, video: { codec: 'avc', width: W, height: H }, fastStart: 'in-memory' }, audioCfg ? { audio: { codec: 'aac', numberOfChannels: 1, sampleRate: 44100 } } : {}));
+    let encErr = null;
+    venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => { encErr = e; } });
+    venc.configure({ codec, width: W, height: H, bitrate: 4_000_000, framerate: FPS, avc: { format: 'avc' } });
+    const total = DUR * FPS;
+    for (let i = 0; i < total; i++) {
+      if (encErr) throw encErr;
+      drawFrame(i / FPS, d, i < COVER_FRAMES);
+      const frame = new VideoFrame(canvas, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+      venc.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
+      frame.close();
+      while (venc.encodeQueueSize > 6) { await _wait(4); if (encErr) throw encErr; }
+      if (i % 3 === 0) { if (window.__onProg) window.__onProg((i + 1) / total * 0.9); await _wait(0); }
+    }
+    await venc.flush(); if (encErr) throw encErr;
+    if (audioCfg) {
+      aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => { encErr = e; } });
+      aenc.configure(audioCfg);
+      const data = audioBuf.getChannelData(0), CH = 4096;
+      for (let off = 0; off < data.length; off += CH) {
+        const n = Math.min(CH, data.length - off);
+        const ad = new AudioData({ format: 'f32-planar', sampleRate: audioBuf.sampleRate, numberOfFrames: n, numberOfChannels: 1, timestamp: Math.round(off / audioBuf.sampleRate * 1e6), data: data.subarray(off, off + n) });
+        aenc.encode(ad); ad.close();
+        while (aenc.encodeQueueSize > 8) await _wait(2);
+      }
+      await aenc.flush(); if (encErr) throw encErr;
+    }
+    muxer.finalize();
+    const blob = new Blob([target.buffer], { type: 'video/mp4' });
+    if (blob.size < 50 * 1024) throw new Error('Hasil encode terlalu kecil');
+    window.__lastEncoder = 'WebCodecs H.264 (' + codec + ')' + (audioCfg ? ' + AAC' : '');
+    if (window.__onProg) window.__onProg(1);
+    return { blob, mimeType: 'video/mp4' };
+  } finally {
+    try { if (venc && venc.state !== 'closed') venc.close(); } catch (e) {}
+    try { if (aenc && aenc.state !== 'closed') aenc.close(); } catch (e) {}
+    unlockScreen(); recording = false;
+  }
+}
+async function generateVideo(d) {
+  try { return await generateVideoWebCodecs(d); }
+  catch (e) { recording = false; window.__lastEncoder = 'MediaRecorder fallback'; return await generateVideoRecorder(d); }
+}
+async function generateVideoRecorder(d) {
+  if (typeof MediaRecorder === 'undefined' || !canvas.captureStream) throw new Error('Browser tidak mendukung perekaman');
+  recording = true; await lockScreen();
+  const stream = canvas.captureStream(FPS);
+  const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm';
+  const rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
+  const chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  return new Promise(resolve => {
+    rec.onstop = () => { stream.getTracks().forEach(tr => tr.stop()); unlockScreen(); recording = false; resolve({ blob: new Blob(chunks, { type: mimeType }), mimeType }); };
+    rec.start(100);
+    const t0 = performance.now();
+    function tick() {
+      const el = (performance.now() - t0) / 1000;
+      if (el >= DUR) { drawFrame(DUR, d); setTimeout(() => rec.stop(), 250); return; }
+      drawFrame(el, d);
+      if (window.__onProg) window.__onProg(Math.min(el / DUR, 1));
+      requestAnimationFrame(tick);
+    }
+    tick();
+  });
+}
+
+// ==================== Buttons ====================
+document.getElementById('shuffle').addEventListener('click', () => {
+  if (recording || !rows.length) return;
+  assignTemplates(); renderTable(); setPreview(selIdx, false);
+});
+
+const genOneBtn = document.getElementById('genOne');
+const genAllBtn = document.getElementById('genAll');
+function setBusy(b) {
+  genOneBtn.disabled = b || !rows.length;
+  genAllBtn.disabled = b || !rows.length;
+  loadBtn.disabled = b || !fileInput.files[0];
+  document.getElementById('shuffle').disabled = b || !rows.length;
+  fileInput.disabled = b;
+}
+
+// ==================== INDEXEDDB SLOT ====================
+// Video disimpan di store 'results'. Slot 'slot:NN' (meta) -> kunci hasil. Player membaca video01, video02, ... lewat slot ini.
+const slotId = n => String(n).padStart(2, '0');
+async function sDel(st, k) { if (!useMem) { try { await idbRun(st, 'readwrite', o => o.delete(k)); return; } catch (e) { memWarn(); } } mem[st].delete(k); }
+function idbStat(msg) { const el = document.getElementById('kvStat'); if (el) el.textContent = msg; }
+async function slotVideo(key, idx, size) {
+  try {
+    await sPut('meta', 'slot:' + slotId(idx), key);
+    idbStat(`✅ video${slotId(idx)} tersimpan di IndexedDB (${(size / 1048576).toFixed(1)} MB)` + (useMem ? ' ⚠ IndexedDB gagal, hanya di memori sementara!' : ''));
+    return !useMem;
+  } catch (e) { idbStat(`❌ video${slotId(idx)}: ${e.message}`); return false; }
+}
+// Samakan slot dengan urutan baris sekarang (dipanggil saat GENERATE SCRIPT, supaya judul = video yang benar)
+async function syncSlots() {
+  const have = new Set(await sKeys('resmeta')), want = new Map();
+  rows.forEach((r, i) => { const k = rowKey(r); if (have.has(k)) want.set('slot:' + slotId(i + 1), k); });
+  for (const k of await sKeys('meta')) if (typeof k === 'string' && k.startsWith('slot:') && !want.has(k)) await sDel('meta', k);
+  for (const [s, k] of want) await sPut('meta', s, k);
+  return want.size;
+}
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+setTimeout(() => {
+  const el = document.getElementById('bridgeSt');
+  if (el) el.textContent = document.documentElement.dataset.jhonBridge ? '🔗 Script player terdeteksi di halaman ini.' : '(Script player belum terdeteksi di halaman ini: install script, lalu reload halaman ini.)';
+}, 2500);
+
+// ==================== GEN ONE ====================
+genOneBtn.addEventListener('click', async () => {
+  if (!rows.length || recording) return;
+  setBusy(true);
+  const st = document.getElementById('status2');
+  st.textContent = `🎬 Rendering video #${selIdx + 1}...`;
+  try {
+    const bar1 = document.getElementById('progressBar');
+    window.__onProg = f => { bar1.style.width = (f*100).toFixed(0)+'%'; st.textContent = `🎬 Rendering #${selIdx + 1} · ${Math.round(f*100)}%`; };
+    const { blob, mimeType } = await generateVideo(rows[selIdx]);
+    window.__onProg = null; bar1.style.width = '100%';
+    addVideoResult(blob, mimeType, rows[selIdx], selIdx + 1);
+    if (document.getElementById('autoKV').checked) {
+      const buf = await blob.arrayBuffer();
+      const mime = (mimeType || blob.type || 'video/mp4').split(';')[0];
+      const key = rowKey(rows[selIdx]);
+      await sPut('results', key, { buf, mime });
+      const meta = { size: buf.byteLength, mime, ts: Date.now() };
+      await sPut('resmeta', key, meta); doneMeta.set(key, meta);
+      if (await slotVideo(key, selIdx + 1, buf.byteLength)) { meta.slotted = true; await sPut('resmeta', key, meta); }
+      renderTable(); renderDoneList();
+    }
+    st.textContent = '✓ Selesai. Encoder: ' + (window.__lastEncoder || '-');
+  } catch (err) { recording = false; unlockScreen(); st.textContent = '❌ ' + err.message; }
+  finally { setBusy(false); }
+});
+
+// ==================== Variant Rotator ====================
+function makeRotator(list) {
+  let bag = [], last = null;
+  return () => {
+    if (!bag.length) { bag = list.slice(); for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; } if (bag.length > 1 && bag[0] === last) bag.push(bag.shift()); }
+    last = bag.shift(); return last;
+  };
+}
+function rotateVariantsForAll(idx) {
+  const nT = makeRotator(Object.keys(TEMPLATES)), nB = makeRotator(BG_KEYS), nP = makeRotator(PAL_KEYS);
+  (idx || rows.map((_, i) => i)).forEach(i => { const r = rows[i]; r.tpl = nT(); r.bgKey = nB(); r.pal = nP(); });
+  renderTable();
+}
+
+// ==================== GEN ALL ====================
+genAllBtn.addEventListener('click', async () => {
+  if (!rows.length || recording || genAllRunning) return;
+  const st = document.getElementById('status2'), bar = document.getElementById('progressBar');
+  const dropped = pruneExpired();
+  if (dropped) { selIdx = 0; renderTable(); document.getElementById('rowCount').textContent = rows.length; }
+  if (!rows.length) { st.textContent = `🗑 Semua jadwal lewat.`; return; }
+  await refreshDone();
+  const total = rows.length;
+  const pending = rows.map((_, i) => i).filter(i => !doneMeta.has(rowKey(rows[i])));
+  renderTable(); renderDoneList();
+  const needUp = document.getElementById('autoKV').checked ? rows.map((_, i) => i).filter(i => { const m = doneMeta.get(rowKey(rows[i])); return m && !m.slotted; }) : [];
+  if (!pending.length && !needUp.length) { st.textContent = `✓ Semua ${total} video selesai.`; return; }
+  setBusy(true); genAllRunning = true;
+  document.body.classList.add('genning');
+  document.getElementById('previewLabel').textContent = '⏸ Preview off';
+  rotateVariantsForAll(pending);
+  await saveSession();
+  const chips = document.getElementById('chips');
+  chips.innerHTML = rows.map((r, i) => `<span class="chip ${doneMeta.has(rowKey(r)) ? 'ok' : ''}" id="chip${i}">${i+1}</span>`).join('');
+  const setChip = (i, c) => { const el = document.getElementById('chip' + i); if (el) el.className = 'chip ' + c; };
+  let finished = total - pending.length, cur = needUp.length ? needUp[0] : pending[0], upFail = 0;
+  needUp.forEach(i => setChip(i, 'warn'));
+  bar.style.width = ((finished / total) * 100).toFixed(1) + '%';
+  try {
+    for (const i of needUp) {
+      cur = i; const key = rowKey(rows[i]);
+      st.textContent = `💾 Pasang slot ${i+1}/${total}...`;
+      setChip(i, 'up');
+      const rec = await sGet('results', key);
+      const ok = rec ? await slotVideo(key, i + 1, rec.buf.byteLength) : false;
+      const m = doneMeta.get(key);
+      if (ok && m) { m.slotted = true; await sPut('resmeta', key, m); setChip(i, 'ok'); }
+      else { upFail++; setChip(i, 'warn'); }
+    }
+    for (const i of pending) {
+      cur = i; const r = rows[i], key = rowKey(r);
+      const label = `[${TEMPLATES[r.tpl].label}] ${r.homeTeam} vs ${r.awayTeam}`;
+      setChip(i, 'run');
+      let lastUi = 0;
+      window.__onProg = f => { const now = performance.now(); if (f < 1 && f > 0 && now - lastUi < 250) return; lastUi = now; const ov = ((finished + f * 0.95) / total) * 100; bar.style.width = ov.toFixed(1) + '%'; st.textContent = `🎬 ${i+1}/${total} · ${Math.round(f*100)}% · total ${Math.round(ov)}% — ${label}`; };
+      window.__onProg(0);
+      const { blob, mimeType } = await generateVideo(r);
+      window.__onProg = null;
+      st.textContent = `💾 Simpan ${i+1}/${total}...`;
+      const mime = (mimeType || blob.type || 'video/mp4').split(';')[0];
+      const buf = await blob.arrayBuffer();
+      await sPut('results', key, { buf, mime });
+      const meta = { size: buf.byteLength, mime, ts: Date.now() };
+      await sPut('resmeta', key, meta); doneMeta.set(key, meta); finished++; setChip(i, 'ok'); renderDoneList();
+      bar.style.width = ((finished / total) * 100).toFixed(1) + '%';
+      if (document.getElementById('autoKV').checked) {
+        setChip(i, 'up');
+        const ok = await slotVideo(key, i + 1, buf.byteLength);
+        if (ok) { meta.slotted = true; await sPut('resmeta', key, meta); setChip(i, 'ok'); }
+        else { upFail++; setChip(i, 'warn'); }
+      }
+      await new Promise(res => setTimeout(res, 250));
+    }
+    st.textContent = `✓ ${total} video selesai!` + (upFail ? ` ⚠ ${upFail} gagal simpan slot.` : '');
+    renderTable();
+  } catch (err) { recording = false; unlockScreen(); setChip(cur, 'err'); st.textContent = `❌ Berhenti di ${cur+1}: ${err.message}`; }
+  finally { window.__onProg = null; genAllRunning = false; document.body.classList.remove('genning'); document.getElementById('previewLabel').textContent = ''; setBusy(false); renderTable(); renderDoneList(); if (rows.length) setPreview(selIdx, false); }
+});
+
+// ==================== PLAYER SCRIPT GENERATOR ====================
+(function(){
+  const $ = id => document.getElementById(id);
+  if (!$('plGen')) return;
+  let playerCode = '';
+
+  // ---- Pengaturan kecepatan + peringatan ----
+  // hardMin/hardMax = batas keras (nilai dipaksa masuk). warnLow/warnHigh = batas peringatan.
+  const SPEEDS = [
+    { id:'plDelay',  key:'DELAY',  def:10,   hardMin:3,   hardMax:3600,  warnLow:8,    warnHigh:120,  name:'Delay antar post',
+      low:'terlalu singkat, FB bisa menganggap spam / video belum selesai diproses (disarankan ≥ 8 dtk)', high:'sangat lama, total waktu posting jadi panjang' },
+    { id:'plFactor', key:'SPEED',  def:1,    hardMin:0.25, hardMax:5,    warnLow:0.6,  warnHigh:2.5,  name:'Kecepatan aksi',
+      low:'terlalu cepat, klik/ketik bisa mendahului UI FB → gagal/lompat langkah (disarankan ≥ 0.6)', high:'sangat lambat, tiap aksi jadi tertunda lama' },
+    { id:'plNext',   key:'NEXTCD', def:2000, hardMin:300,  hardMax:30000, warnLow:1200, warnHigh:10000, name:'Jeda klik Next',
+      low:'terlalu kecil, Next bisa terklik sebelum langkah sebelumnya selesai pindah (disarankan ≥ 1200 ms)', high:'sangat lama per langkah' },
+    { id:'plUpWait', key:'UPWAIT', def:300,  hardMin:30,   hardMax:3600,  warnLow:120,  warnHigh:900,  name:'Maks tunggu upload',
+      low:'terlalu singkat, video besar bisa dianggap gagal padahal masih upload (disarankan ≥ 120 dtk)', high:'sangat lama kalau upload macet' },
+    { id:'plDlTo',   key:'DLTO',   def:180,  hardMin:10,   hardMax:1800,  warnLow:60,   warnHigh:600,  name:'Timeout ambil video',
+      low:'terlalu singkat, transfer video dari tab generator bisa dianggap macet (disarankan ≥ 60 dtk)', high:'sangat lama kalau tab generator tidak merespons' }
+  ];
+  function speedVal(sp){
+    let v = parseFloat($(sp.id).value);
+    if (!isFinite(v)) v = sp.def;
+    return Math.min(sp.hardMax, Math.max(sp.hardMin, v));
+  }
+  // return jumlah peringatan "terlalu cepat/kecil"
+  function checkSpeeds(){
+    const out = []; let fast = 0;
+    SPEEDS.forEach(sp => {
+      const el = $(sp.id), raw = parseFloat(el.value), v = speedVal(sp);
+      let bad = false;
+      if (isFinite(raw) && raw !== v) { out.push('<div class="w-fast">⚠️ ' + sp.name + ': ' + raw + ' di luar batas, dipakai ' + v + '</div>'); bad = true; fast++; }
+      else if (v < sp.warnLow) { out.push('<div class="w-fast">⚠️ ' + sp.name + ' = ' + v + ' → ' + sp.low + '</div>'); bad = true; fast++; }
+      else if (v > sp.warnHigh) { out.push('<div class="w-slow">🐢 ' + sp.name + ' = ' + v + ' → ' + sp.high + '</div>'); bad = true; }
+      el.classList.toggle('bad', bad);
+    });
+    $('plWarn').innerHTML = out.length ? out.join('') : '<div class="w-ok">✅ Kecepatan dalam batas aman</div>';
+    return fast;
+  }
+  SPEEDS.forEach(sp => $(sp.id).addEventListener('input', checkSpeeds));
+  checkSpeeds();
+
+  function buildTitles(src){
+    return rows.map((r, i) => {
+      if (src === 'col' && r.videoTitle) return r.videoTitle;
+      const h = (r.homeTeam || '').trim(), a = (r.awayTeam || '').trim();
+      return (h && a) ? (h + ' vs ' + a) : (h || a || 'Match #' + (i+1));
+    });
+  }
+
+  function buildPlayer(titles, captions){
+    const tplEl = $('playerTpl');
+    if (!tplEl) throw new Error('Template player tidak ditemukan di halaman');
+    const sv = {}; SPEEDS.forEach(sp => { sv[sp.key] = speedVal(sp); });
+    // halaman generator ini = tempat IndexedDB; script player juga dipasang di sini sebagai bridge
+    const genMatch = location.protocol === 'file:' ? 'file://' + location.pathname : location.origin + location.pathname;
+    const js = v => JSON.stringify(v, null, 2).replace(/</g, '\\u003c');
+    const firstUrl = ((captions.find(c => /https?:\/\//i.test(c)) || '').match(/https?:\/\/[^\s]+/i) || [''])[0];
+    const map = {
+      NAME: 'JHON FB VIDEO + STEPS v2.7 (' + titles.length + ' video, judul per video)',
+      VERSION: '2.7.' + Date.now(),
+      GEN_MATCH: genMatch,
+      WATCH_LINK: JSON.stringify(firstUrl),
+      REPLACE_LINKS: firstUrl ? 'true' : 'false',
+      DELAY: String(Math.round(sv.DELAY)),
+      SPEED: String(sv.SPEED),
+      NEXTCD: String(Math.round(sv.NEXTCD)),
+      UPWAIT: String(Math.round(sv.UPWAIT)),
+      DLTO: String(Math.round(sv.DLTO) * 1000),
+      TITLES: js(titles),
+      POSTS: js(captions)
+    };
+    return tplEl.textContent.replace(/^\s*\n/, '').replace(/@@([A-Z_]+)@@/g, (m, k) => (k in map) ? map[k] : m);
+  }
+
+  $('plGen').addEventListener('click', async () => {
+    const st = $('plStat');
+    if (!rows.length) { st.textContent = '❌ Load Excel dulu'; return; }
+    let nSlot = 0; try { nSlot = await syncSlots(); } catch (e) {}
+    const nFast = checkSpeeds();
+    if (nFast && !confirm('Ada ' + nFast + ' pengaturan kecepatan yang terlalu cepat/kecil (lihat peringatan kuning). Tetap generate?')) { st.textContent = '⏸️ Dibatalkan — atur ulang kecepatan.'; return; }
+    const src = $('plTitleSrc').value;
+    const titles = buildTitles(src);
+    // caption: split input pakai pipe | jadi baris baru
+    const capRaw = $('plCap').value || '';
+    const capLines = capRaw.replace(/\|/g, '\n').trim();
+    const captions = rows.map(() => capLines);
+    playerCode = buildPlayer(titles, captions);
+    const kb = (new Blob([playerCode]).size/1024).toFixed(1);
+    const lines = playerCode.split('\n').length;
+    st.textContent = '✅ ' + rows.length + ' video (' + nSlot + ' sudah ada di IndexedDB) · ' + kb + ' KB · ' + lines + ' baris · judul #1: "' + titles[0] + '"';
+    const pv = $('plPreview');
+    pv.value = playerCode;
+    $('plPreviewWrap').style.display = 'block';
+    $('plPreviewInfo').textContent = lines + ' baris · ' + kb + ' KB · klik 📋 COPY SCRIPT di atas';
+    $('plCopy').style.display = 'block';
+  });
+
+  $('plCopy').addEventListener('click', async () => {
+    if (!playerCode) return;
+    const st = $('plStat');
+    const done = () => { st.textContent = '📋 Tercopy! Paste di Tampermonkey → Save'; setTimeout(() => { if(st) st.textContent = '✅ ' + rows.length + ' video siap'; }, 2500); };
+    try { await navigator.clipboard.writeText(playerCode); done(); }
+    catch (e) {
+      // fallback: select-all textarea + execCommand
+      const pv = $('plPreview');
+      if (pv) {
+        pv.focus(); pv.select();
+        try { document.execCommand('copy'); done(); return; } catch (e2) {}
+      }
+      window.prompt('Copy manual (Ctrl+A → Ctrl+C):', playerCode);
+    }
+  });
+})();
+
+// ==================== INIT RESUME ====================
+(async function initResume() {
+  try {
+    const sess = await sGet('meta', 'session');
+    if (!sess || !sess.rows || !sess.rows.length || rows.length) return;
+    const keys = new Set(await sKeys('resmeta'));
+    const done = sess.rows.filter(r => keys.has(rowKey(r))).length;
+    const bar = document.createElement('div');
+    bar.id = 'resumeBar'; bar.className = 'panel';
+    const when = sess.savedAt ? new Date(sess.savedAt).toLocaleString() : '';
+    bar.innerHTML = `<div style="font-size:13px;margin-bottom:8px">💾 Sesi: <b>${sess.rows.length}</b> baris · <b>${done}</b> selesai <span style="color:#889"> (${esc(when)})</span></div>
+      <div class="row"><button id="rbGo" style="flex:1">▶ Lanjutkan</button><button id="rbDel" class="sec" style="flex:1">🗑 Hapus</button></div>`;
+    const layout = document.querySelector('.layout');
+    layout.parentNode.insertBefore(bar, layout);
+    document.getElementById('rbGo').addEventListener('click', async () => {
+      rows = sess.rows;
+      const dropped = pruneExpired();
+      document.getElementById('shuffle').disabled = !rows.length;
+      document.getElementById('rowCount').textContent = rows.length;
+      document.getElementById('genOne').disabled = !rows.length;
+      document.getElementById('genAll').disabled = !rows.length;
+      await refreshDone();
+      selIdx = 0; renderTable(); renderDoneList();
+      if (rows.length) setPreview(0, false);
+      document.getElementById('status').textContent = `✓ Dipulihkan: ${rows.length} baris, ${doneMeta.size} selesai.` + (dropped ? ` 🗑 ${dropped} lewat.` : '');
+      bar.remove(); saveSession();
+    });
+    document.getElementById('rbDel').addEventListener('click', async () => {
+      if (!confirm('Hapus sesi & semua hasil?')) return;
+      await sClear('meta'); await sClear('results'); await sClear('resmeta');
+      bar.remove();
+    });
+  } catch (e) {}
+})();
+</script>
+<script type="text/plain" id="playerTpl">
+// ==UserScript==
+// @name         @@NAME@@
+// @namespace    jhon-video-steps
+// @version      @@VERSION@@
+// @description  Post ke grup FB: 1 video dari IndexedDB generator + 1 caption dari Excel per post, jalan otomatis berurutan
+// @match        *://*.facebook.com/*
+// @match        *://*.m.facebook.com/*
+// @match        @@GEN_MATCH@@
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_deleteValue
+// @grant        GM_addValueChangeListener
+// @grant        GM_removeValueChangeListener
+// @noframes
+// @run-at       document-idle
+// ==/UserScript==
+(function(){
+  'use strict';
+
+  const IS_FB = /(^|\.)facebook\.com$/i.test(location.hostname);
+  const TX = 'jhonvid_tx', RX = 'jhonvid_rx', REQ = 'jhonvid_req';
+
+  // ============ BRIDGE: jalan di tab GENERATOR (bukan di FB) ============
+  // IndexedDB itu per-origin, jadi FB tidak bisa baca langsung. Script ini juga aktif di halaman generator,
+  // baca video dari IndexedDB di sana, lalu kirim ke tab FB lewat GM_setValue (potongan base64 + ack per potongan).
+  function genBridge(){
+    try{ document.documentElement.setAttribute('data-jhon-bridge', '1'); }catch(e){}
+    const CH = 1536 * 1024;
+    let busy = false;
+    const badge = document.createElement('div');
+    badge.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:2147483647;background:#0f0f18;color:#6ee7b7;border:1px solid #2a2a3a;border-radius:8px;padding:6px 10px;font:12px monospace;max-width:70vw';
+    const say = t => { badge.textContent = '🔗 Bridge video aktif · ' + t; };
+    say('siap (jangan tutup tab ini)');
+    const mount = () => { if(!badge.isConnected && document.body) document.body.appendChild(badge); };
+    mount(); document.addEventListener('DOMContentLoaded', mount); setInterval(mount, 3000);
+    const openDB = () => new Promise((res, rej) => {
+      const rq = indexedDB.open('vidgen_v3', 1);
+      rq.onupgradeneeded = () => { ['meta', 'results', 'resmeta'].forEach(n => { if(!rq.result.objectStoreNames.contains(n)) rq.result.createObjectStore(n); }); };
+      rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error);
+    });
+    const idbGet = (db, st, k) => new Promise((res, rej) => { const r = db.transaction(st, 'readonly').objectStore(st).get(k); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    const b64 = u8 => { let s = ''; for(let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+    const waitAck = (rid, i, ms) => new Promise((res, rej) => {
+      let lid = null;
+      const t = setTimeout(() => { try{ GM_removeValueChangeListener(lid); }catch(e){} rej(new Error('tab FB tidak merespons')); }, ms);
+      lid = GM_addValueChangeListener(RX, (n, o, v, remote) => {
+        if(remote && v && v.rid === rid && v.ack === i){ clearTimeout(t); try{ GM_removeValueChangeListener(lid); }catch(e){} res(); }
+      });
+    });
+    async function serve(req){
+      const rid = req.rid, n = String(req.n);
+      busy = true;
+      try{
+        const db = await openDB();
+        const key = await idbGet(db, 'meta', 'slot:' + n);
+        if(!key) throw new Error('video' + n + ' belum ada di IndexedDB. Generate videonya, lalu klik GENERATE SCRIPT lagi.');
+        const rec = await idbGet(db, 'results', key);
+        if(!rec || !rec.buf) throw new Error('data video' + n + ' kosong di IndexedDB');
+        const u8 = new Uint8Array(rec.buf), chunks = Math.ceil(u8.length / CH);
+        say('kirim video' + n + ' (' + (u8.length / 1048576).toFixed(1) + ' MB)...');
+        let p = waitAck(rid, -1, 20000);
+        GM_setValue(TX, { rid, type: 'meta', mime: rec.mime || 'video/mp4', size: u8.length, chunks });
+        await p;
+        for(let i = 0; i < chunks; i++){
+          p = waitAck(rid, i, 40000);
+          GM_setValue(TX, { rid, type: 'chunk', i, data: b64(u8.subarray(i * CH, (i + 1) * CH)) });
+          await p;
+          say('video' + n + ' ' + Math.round((i + 1) / chunks * 100) + '%');
+        }
+        GM_setValue(TX, { rid, type: 'end', s: Math.random() });
+        say('video' + n + ' terkirim ✔');
+      }catch(e){
+        say('❌ ' + e.message);
+        GM_setValue(TX, { rid, type: 'err', msg: e.message, s: Math.random() });
+      }finally{
+        busy = false;
+        setTimeout(() => { try{ const c = GM_getValue(TX); if(c && c.rid === rid) GM_deleteValue(TX); }catch(e){} }, 3000);
+      }
+    }
+    GM_addValueChangeListener(REQ, (n, o, v, remote) => {
+      if(!remote || !v || !v.rid) return;
+      if(busy){ GM_setValue(TX, { rid: v.rid, type: 'err', msg: 'bridge sibuk, coba lagi', s: Math.random() }); return; }
+      serve(v);
+    });
+  }
+  if(!IS_FB){ genBridge(); return; }
+
+  // ============ KONFIGURASI ============
+  const CONFIG = {
+    targetUrl: '',            // '' = otomatis: halaman FB yang sedang dibuka saat klik MULAI (grup / Page / profil / beranda). Isi URL kalau mau dikunci ke 1 halaman.
+
+    watchLink: @@WATCH_LINK@@,  // link yang dipakai di SEMUA caption (diambil dari caption template)
+    replaceAllLinks: @@REPLACE_LINKS@@,    // true = semua URL http(s) di caption diganti watchLink
+    maxTries: 3,              // percobaan ulang (dengan refresh) kalau 1 post gagal sebelum diklik
+    attachMode: 'drop',     // v2.8: mode PERTAMA yang dicoba ('input' = set input[type=file] | 'drop' = drag&drop). Kalau tidak ada preview/progress, otomatis coba mode lainnya.
+    attachConfirmMs: 2000,  // v2.8: batas tunggu preview/progress per mode attach (ms)
+    videoIdPad: 2,             // panjang digit id: 2 -> "01".."20" (ganti ke 1 kalau slot pakai "1","2",...)
+
+    // v2.7: mulai dari video nomor berapa (1 = dari awal). Contoh: kalau video 01 & 02 sudah terposting, isi 3.
+    // Post sebelum nomor ini otomatis ditandai "dilewati" (anti dobel). Berlaku sekali per nilai startFrom.
+    startFrom: 1,
+
+    delayBetween: @@DELAY@@,         // jeda antar post (detik), + random kecil
+    maxWaitUpload: @@UPWAIT@@,       // detik maksimum nunggu upload video kelar di FB
+    downloadTimeoutMs: @@DLTO@@,
+    minVideoBytes: 100 * 1024,
+    requireCaptionOk: true,   // true = TIDAK post kalau caption gagal terverifikasi rapi
+    previewWait: 1,
+    pollInterval: 300,
+    hashtags: [],             // tag global utk input "Add tags" di langkah "Edit reel" (tanpa #). Contoh: ['SportFusion','Football']
+    tagsFromCaption: true,    // true = #hashtag yang ada di caption ikut dimasukkan ke input tags
+    maxNextClicks: 15,         // batas klik "Next" per post (alur reel: Create -> Edit -> Settings -> Post)
+    speedFactor: @@SPEED@@,     // pengali semua jeda aksi (1 = normal, <1 lebih cepat, >1 lebih lambat)
+    nextCooldownMs: @@NEXTCD@@      // jeda minimal antar klik Next, supaya langkah sebelumnya selesai pindah dulu
+  };
+
+  // ============ CAPTION / JUMLAH POST ============
+  // Dibuat otomatis oleh generator: jumlah post = jumlah video (slot video01 .. videoNN di IndexedDB generator).
+  // Urutan TITLES / POSTS = urutan slot di IndexedDB.
+  const TITLES = @@TITLES@@;
+  const POSTS = @@POSTS@@;
+
+  // Steps acuan (sesuai yang diberikan): CLICK compose -> TYPE caption -> CLICK post.
+  // Upload video disisipkan terpisah di antara TYPE dan POST (lihat playOnePost).
+  const RECORDED_STEPS = [
+    { "type": "CLICK", "selector": "[aria-label^=\"Write something\"]", "value": "", "url": "" },
+    { "type": "TYPE",  "selector": "div[contenteditable=\"true\"][role=\"textbox\"]", "value": "POST_CONTENT", "url": "", "autoRemoveLink": false, "previewWait": CONFIG.previewWait },
+    { "type": "CLICK", "selector": "POST_BUTTON_REAL", "value": "", "url": "" }
+  ];
+
+  const IS_TOUCH = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const sleepRaw = m => new Promise(r => setTimeout(r, m));   // waktu nyata (countdown / hitungan detik)
+  const sleep = m => new Promise(r => setTimeout(r, Math.max(0, m * (CONFIG.speedFactor || 1))));   // jeda aksi, ikut speedFactor
+  const normTxt = s => String(s || '').replace(/\s+/g, ' ').trim();
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function titleFor(i){ return String(TITLES[i] || '').trim(); }
+  function captionFor(i){
+    let c = String(POSTS[i] || '');
+    if(CONFIG.replaceAllLinks && CONFIG.watchLink) c = c.replace(/https?:\/\/[^\s]+/gi, CONFIG.watchLink);
+    const ttl = titleFor(i);
+    if(ttl && c && !c.startsWith(ttl + '\n')) c = ttl + '\n' + c;   // judul per video = baris pertama caption
+    else if(ttl && !c) c = ttl;
+    return c;
+  }
+  function videoIdFor(i){
+    const n = String(i + 1);
+    return n.padStart(CONFIG.videoIdPad, '0');
+  }
+
+  // ============ PROGRES (anti dobel, disimpan di browser) ============
+  // Target = halaman FB tempat posting (grup / Page / profil / beranda). Progress disimpan PER TARGET.
+  function normPath(u){
+    try{
+      const x = new URL(u, location.origin);
+      let p = x.pathname.replace(/\/+$/, '') || '/';
+      if(/^\/profile\.php$/i.test(p)) p += '?id=' + (x.searchParams.get('id') || '');
+      return p.toLowerCase();
+    }catch(e){ return String(u || '').toLowerCase(); }
+  }
+  function hashStr(str){ let h = 5381; for(let i=0;i<str.length;i++) h = ((h<<5)+h+str.charCodeAt(i))|0; return (h>>>0).toString(36); }
+  function curTargetKey(){ return normPath(CONFIG.targetUrl || location.href); }
+  function progKeyFor(k){ return 'jhon_vidsteps_prog_' + hashStr(k) + '_' + POSTS.length + '_' + hashStr(TITLES.join('|')); }
+  let CUR_KEY = curTargetKey();
+  let PKEY = progKeyFor(CUR_KEY);
+  let PROG = {}, IDX = 0, PENDING_RECOVERED = null, START_SKIPPED = 0;
+  function loadProgState(){
+    PROG = {};
+    try { PROG = JSON.parse(localStorage.getItem(PKEY) || '{}') || {}; } catch(e){ PROG = {}; }
+    if (!PROG.sent) PROG.sent = {};
+    if (!PROG.tries) PROG.tries = {};
+    IDX = Math.min(PROG.idx || 0, POSTS.length);
+    if (IDX >= POSTS.length) IDX = 0;
+    PENDING_RECOVERED = null;
+    if (PROG.pending !== null && PROG.pending !== undefined) {
+      const pi = PROG.pending;
+      if (!PROG.sent[pi]) { PROG.sent[pi] = 2; PENDING_RECOVERED = pi; }
+      IDX = Math.min(pi + 1, POSTS.length); if (IDX >= POSTS.length) IDX = 0;
+      PROG.pending = null; saveProg();
+    }
+    // v2.7: START_FROM — lewati post sebelum nomor startFrom (sekali per nilai)
+    START_SKIPPED = 0;
+    const sf = Math.max(1, Math.floor(Number(CONFIG.startFrom) || 1));
+    if (sf > 1 && PROG.startApplied !== sf) {
+      const lim = Math.min(sf - 1, POSTS.length);
+      for (let i = 0; i < lim; i++) { if (!PROG.sent[i]) { PROG.sent[i] = 3; START_SKIPPED++; } }
+      if (IDX < lim) IDX = lim;
+      if (IDX >= POSTS.length) IDX = 0;
+      PROG.startApplied = sf;
+      saveProg();
+    }
+  }
+  function saveProg(){ PROG.idx = IDX; PROG.ts = Date.now(); try{ localStorage.setItem(PKEY, JSON.stringify(PROG)); }catch(e){} }
+  function sentCount(){ let n=0; for(let i=0;i<POSTS.length;i++) if(PROG.sent[i]) n++; return n; }
+  loadProgState();
+
+  let RUN = false, UI_CLOSED = false, LOGS = [], AUTO_TRIED = false;
+  function addLog(msg){
+    const t = new Date().toLocaleTimeString().slice(0,8);
+    LOGS.push('['+t+'] '+msg); if(LOGS.length>200) LOGS.shift();
+    const el = document.getElementById('jhon-vs-logs');
+    if(el){ el.innerHTML = LOGS.slice(-50).map(l=>'<div>'+esc(l)+'</div>').join(''); el.scrollTop = el.scrollHeight; }
+    console.log('[JHON VS]', msg);
+  }
+
+  // ============ KLIK UNIVERSAL (fix v2.5: touch event asli utk Lemur dkk) ============
+  async function universalClick(el, opts){
+    if(!el) return false;
+    const direct = !!(opts && opts.direct);
+    try{
+      if(direct){
+        // mode langsung (alur reel): scroll instan tanpa animasi, lalu event dikirim ke tombol ITU SENDIRI.
+        // Scroll smooth + elementFromPoint di dialog bersarang bisa menggeser layout dan membuat klik
+        // jatuh ke elemen lain (mis. baris yang bisa di-expand) -> terlihat "Next" tidak berpindah langkah.
+        try{ el.scrollIntoView({block:'nearest', behavior:'instant'}); }catch(e1){ try{ el.scrollIntoView({block:'nearest'}); }catch(e2){} }
+        await sleep(200);
+      } else {
+        el.scrollIntoView({behavior:'smooth', block:'center'});
+        await sleep(300);
+      }
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      let target = el;
+      if(direct){
+        try{
+          const vt0 = document.elementFromPoint(cx, cy);
+          if(vt0 && !(vt0 === el || el.contains(vt0))) addLog('⚠️ titik tombol tertutup: ' + descHit(vt0) + ' -> klik langsung ke tombol');
+        }catch(e){}
+      }
+      if(IS_TOUCH && !direct){
+        try{
+          const vt = document.elementFromPoint(cx, cy);
+          if(vt && (vt === el || el.contains(vt))) target = vt;
+          else if(vt) addLog('⚠️ titik klik tertutup elemen lain: ' + descHit(vt) + ' -> event dikirim langsung ke tombol');
+        }catch(e){}
+      }
+      try{ if(target.focus) target.focus(); }catch(e){}
+      await sleep(60);
+      const ptype = IS_TOUCH ? 'touch' : 'mouse';
+      // FIX: dulu 'view:window' selalu disertakan di tiap event (mouseover, mousedown,
+      // dst). Terbukti nyata di Lemur Browser/WebView tertentu, `new MouseEvent(type,
+      // {view:window,...})` melempar "Failed to convert value to 'Window'" -- baris
+      // 'click' yang dulu TIDAK dibungkus try/catch sendiri bikin exception ini jatuh
+      // ke catch terluar dan seluruh klik dianggap gagal total. Sekarang 'view' dicoba
+      // sekali di awal; kalau browser ini bermasalah dgn property itu, SEMUA event
+      // berikutnya otomatis dibuat TANPA 'view' sama sekali (tidak coba-gagal berulang).
+      let viewOk = true;
+      try{ new MouseEvent('mouseover', {view:window}); }catch(e){ viewOk = false; }
+      const o = Object.assign({bubbles:true, cancelable:true, clientX:cx, clientY:cy, button:0}, viewOk ? {view:window} : {});
+      const po = Object.assign({pointerId:1, pointerType:ptype, isPrimary:true}, o);
+      let tch = null;
+      if(IS_TOUCH){
+        try{
+          tch = new Touch({ identifier: Date.now(), target, clientX:cx, clientY:cy,
+            pageX:cx+window.scrollX, pageY:cy+window.scrollY, screenX:cx, screenY:cy,
+            radiusX:10, radiusY:10, rotationAngle:0, force:1 });
+        }catch(e){}
+      }
+      const touchInit = Object.assign({bubbles:true, cancelable:true}, viewOk ? {view:window} : {});
+      try{ target.dispatchEvent(new MouseEvent('mouseover', o)); }catch(e){}
+      try{ target.dispatchEvent(new PointerEvent('pointerdown', Object.assign({buttons:1}, po))); }catch(e){}
+      if(tch){ try{ target.dispatchEvent(new TouchEvent('touchstart', Object.assign({}, touchInit, {touches:[tch], targetTouches:[tch], changedTouches:[tch]}))); }catch(e){} }
+      await sleep(50);
+      try{ target.dispatchEvent(new MouseEvent('mousedown', Object.assign({buttons:1}, o))); }catch(e){}
+      try{ target.dispatchEvent(new PointerEvent('pointerup', po)); }catch(e){}
+      if(tch){ try{ target.dispatchEvent(new TouchEvent('touchend', Object.assign({}, touchInit, {touches:[], targetTouches:[], changedTouches:[tch]}))); }catch(e){} }
+      try{ target.dispatchEvent(new MouseEvent('mouseup', o)); }catch(e){}
+      // Klik final -- tetap dibungkus try/catch sendiri + fallback native click() supaya
+      // kalaupun MouseEvent gagal dibuat karena alasan lain, klik tetap terkirim.
+      let clicked = false;
+      try{ target.dispatchEvent(new MouseEvent('click', Object.assign({detail:1}, o))); clicked = true; }
+      catch(e1){ try{ target.click(); clicked = true; }catch(e2){} }
+      addLog(clicked ? '→ click sent' + (direct ? ' (direct)' : '') : '⚠️ click event gagal dikirim sama sekali');
+      return true;
+    }catch(e){ addLog('click ERR: '+e.message); return false; }
+  }
+
+  // ============ AMBIL VIDEO DARI INDEXEDDB (via tab generator) ============
+  function fetchVideo(videoId){
+    return new Promise((resolve, reject) => {
+      const rid = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      const parts = []; let mime = 'video/mp4', total = 0, got = 0, nChunks = 0, nextI = 0, lastPct = -25;
+      let done = false, timer = null, lid = null;
+      const finish = (err, blob) => {
+        if(done) return; done = true; clearTimeout(timer);
+        try{ if(lid != null) GM_removeValueChangeListener(lid); }catch(e){}
+        try{ GM_deleteValue(REQ); }catch(e){}
+        if(err) reject(err); else resolve(blob);
+      };
+      const arm = (ms, msg) => { clearTimeout(timer); timer = setTimeout(() => finish(new Error(msg)), ms); };
+      const ack = i => GM_setValue(RX, { rid, ack: i, s: Math.random() });
+      lid = GM_addValueChangeListener(TX, (name, oldV, v, remote) => {
+        if(done || !remote || !v || v.rid !== rid) return;
+        try{
+          if(v.type === 'err') return finish(new Error(v.msg));
+          if(v.type === 'meta'){ mime = v.mime; total = v.size; nChunks = v.chunks; arm(CONFIG.downloadTimeoutMs, 'Transfer video macet'); return ack(-1); }
+          if(v.type === 'chunk'){
+            if(v.i !== nextI) return;
+            const bin = atob(v.data), u8 = new Uint8Array(bin.length);
+            for(let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+            parts.push(u8); got += u8.length; nextI++;
+            const pct = total ? Math.floor(got / total * 100) : 0;
+            if(pct - lastPct >= 25){ lastPct = pct; addLog('⬇️ Ambil dari IndexedDB ' + pct + '%'); }
+            arm(CONFIG.downloadTimeoutMs, 'Transfer video macet'); return ack(v.i);
+          }
+          if(v.type === 'end'){
+            if(nextI !== nChunks) return finish(new Error('Potongan video tidak lengkap (' + nextI + '/' + nChunks + ')'));
+            const b = new Blob(parts, { type: mime });
+            if(b.size < CONFIG.minVideoBytes) return finish(new Error('File terlalu kecil (' + b.size + ' B) — bukan video?'));
+            addLog('✅ Video' + videoId + ' dari IndexedDB (' + Math.round(b.size / 1024 / 1024 * 10) / 10 + ' MB)');
+            return finish(null, b);
+          }
+        }catch(e){ finish(e); }
+      });
+      arm(Math.min(15000, CONFIG.downloadTimeoutMs), 'Tab generator tidak merespons. Buka halaman generator di tab lain (script harus aktif di sana, reload kalau baru install), lalu coba lagi.');
+      GM_setValue(REQ, { rid, n: videoId, s: Math.random() });
+    });
+  }
+
+  // ============ DOM HELPERS ============
+  function isVis(el){ return !!(el && (el.offsetWidth || el.offsetHeight || (el.getClientRects && el.getClientRects().length))); }
+  // v2.4: panel FB lama (Edit reel / composer) bisa masih ada di DOM dengan ukuran normal walau sudah ketutup
+  // panel baru (Reel settings), jadi isVis() saja tidak cukup. isOnTop = titik tengah elemen benar-benar
+  // terlihat di layar & elemen paling atas di situ adalah elemen itu (atau isinya / sebungkus dengannya,
+  // mis. placeholder Lexical). Panel script ini sendiri (#jhon-vs) diabaikan.
+  function isOnTop(el){
+    try{
+      const r = el.getBoundingClientRect();
+      if(r.width < 4 || r.height < 4) return false;
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      if(cx < 0 || cy < 0 || cx > window.innerWidth || cy > window.innerHeight) return false;
+      const hit = document.elementsFromPoint(cx, cy).filter(e => !(e.closest && e.closest('#jhon-vs')))[0];
+      return !!hit && (hit === el || el.contains(hit) || !!(el.parentElement && el.parentElement.contains(hit)));
+    }catch(e){ return false; }
+  }
+  function findComposerDialog(){
+  const dlgs = Array.from(document.querySelectorAll('div[role="dialog"]'))
+    .filter(x => isVis(x) && x.getBoundingClientRect().width > 200);
+  if(!dlgs.length) return null;
+  // v2.9 FIX: di Grup ada 2 dialog tertumpuk. Pilih yang PUNYA caption editor
+  // (dialog composer yang benar), bukan yang cuma wrapper/preview.
+  for(let i = dlgs.length - 1; i >= 0; i--){
+    const d = dlgs[i];
+    if(d.querySelector('div[contenteditable="true"][role="textbox"], div[contenteditable="true"], [data-lexical-editor="true"]')){
+      return d;
+    }
+  }
+  return dlgs[dlgs.length - 1];
+}
+  function findCaptionEditor(dlg){
+    const scopes = scopesFor(dlg);
+    if(!scopes.length) scopes.push(document);
+    let tagsEl = null; try{ tagsEl = findTagsInput(dlg); }catch(e){}
+    const cands = [];
+    const push = ed => {
+      if(!isVis(ed) || ed === tagsEl || cands.includes(ed)) return;
+      if(ed.closest('[aria-label*="omment"], [aria-label*="oment"]')) return;
+      cands.push(ed);
+    };
+    for(const scope of scopes) scope.querySelectorAll('div[contenteditable="true"][role="textbox"]').forEach(push);
+    // fallback: contenteditable apa pun yang kelihatan (bukan kolom komentar)
+    if(!cands.length) for(const scope of scopes) scope.querySelectorAll('div[contenteditable="true"], [data-lexical-editor="true"]').forEach(push);
+    // v2.4: utamakan editor yang benar-benar di layar (bukan panel lama yang tertutup); kalau tidak ada, perilaku lama
+    return cands.find(isOnTop) || cands[0] || null;
+  }
+  function editorDiag(dlg){
+    const out = [];
+    for(const scope of scopesFor(dlg)){
+      scope.querySelectorAll('div[contenteditable="true"], [data-lexical-editor="true"], textarea, input[type="text"]').forEach(ed => {
+        if(!isVis(ed)) return;
+        const r = ed.getBoundingClientRect();
+        out.push(descEl(ed) + (isOnTop(ed) ? '*TOP*' : '') + '@' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' len=' + String(ed.innerText || ed.value || '').length);
+      });
+    }
+    return out.slice(0, 8).join(' ; ') || '(tidak ada editor kelihatan)';
+  }
+  // v2.8 FIX: dulu di dalam dialog, input[type=file] generik TANPA accept (mis. avatar/cover,
+  // yang kebetulan dirender lebih dulu) langsung dipilih dan short-circuit -- walau input video
+  // ASLI (accept~video) belum/akan muncul. Sekarang: prioritas selalu input ber-accept "video" dulu
+  // (dialog baru document), baru fallback generik (dialog baru document) kalau benar-benar tidak ada.
+  function findVideoInput(dlg){
+  const videoIn = root => { for(const inp of root.querySelectorAll('input[type="file"]')){ if((inp.getAttribute('accept')||'').toLowerCase().includes('video')) return inp; } return null; };
+  const genericIn = root => { for(const inp of root.querySelectorAll('input[type="file"]')){ if(!(inp.getAttribute('accept')||'').trim()) return inp; } return null; };
+  // v3.0: cek SEMUA dialog (Grup punya 2 dialog tertumpuk)
+  if(dlg){ const v = videoIn(dlg); if(v) return v; }
+  for(const d of allDialogs()){ const v = videoIn(d); if(v) return v; }
+  const vd = videoIn(document); if(vd) return vd;
+  if(dlg){ const g = genericIn(dlg); if(g) return g; }
+  for(const d of allDialogs()){ const g = genericIn(d); if(g) return g; }
+  return genericIn(document);
+}
+  function findMediaButton(dlg){
+    if(!dlg) return null;
+    for(const b of dlg.querySelectorAll('div[role="button"], button')){
+      if(!isVis(b)) continue;
+      const s = ((b.getAttribute('aria-label')||'') + ' ' + (b.textContent||'')).toLowerCase();
+      if(/(photo\s*\/\s*video|foto\s*\/\s*video)/.test(s)) return b;
+    }
+    return null;
+  }
+  function allDialogs(){
+    return Array.from(document.querySelectorAll('div[role="dialog"]')).filter(d => isVis(d) && d.getBoundingClientRect().width > 200);
+  }
+  function scopesFor(dlg){
+    const sc = [];
+    if(dlg && document.contains(dlg)) sc.push(dlg);
+    allDialogs().reverse().forEach(d => { if(!sc.includes(d)) sc.push(d); });
+    return sc;
+  }
+  function findPostButton(dlg){
+    let offBtn = null, anyOn = null;
+    for(const scope of scopesFor(dlg)){
+      for(const b of scope.querySelectorAll('div[role="button"], button')){
+        if(!isVis(b)) continue;
+        const t = (b.textContent||'').trim().toLowerCase();
+        const a = (b.getAttribute('aria-label')||'').trim().toLowerCase();
+        const isPost = /^(posting|post|bagikan|share|publish|kirim)( now| reel| sekarang)?$/.test(t) || /^(post|publish|share|posting|kirim|bagikan)( now| reel| sekarang)?$/.test(a);
+        if(!isPost) continue;
+        const disabled = b.getAttribute('aria-disabled')==='true' || b.disabled === true;
+        if(!disabled){
+          if(isOnTop(b)) return { el: b, disabled: false };
+          if(!anyOn) anyOn = { el: b, disabled: false };
+        } else if(!offBtn) offBtn = { el: b, disabled: true };
+      }
+    }
+    return anyOn || offBtn;
+  }
+  function findNextButton(dlg){
+    let first = null;
+    for(const scope of scopesFor(dlg)){
+      for(const b of scope.querySelectorAll('div[role="button"], button')){
+        if(!isVis(b) || b.getAttribute('aria-disabled')==='true') continue;
+        const t = (b.textContent||'').trim().toLowerCase();
+        const a = (b.getAttribute('aria-label')||'').trim().toLowerCase();
+        if(!(/^(next|berikutnya|lanjut|selanjutnya)$/.test(t) || /^(next|berikutnya)$/.test(a))) continue;
+        if(isOnTop(b)) return b;
+        if(!first) first = b;
+      }
+    }
+    return first;
+  }
+  // ============ TAGS + LANGKAH REEL (v2.4) ============
+  function tagsFor(idx){
+    const seen = new Set(), out = [];
+    const add = t => { t = String(t || '').replace(/^#+/, '').trim(); const k = t.toLowerCase(); if(t && !seen.has(k)){ seen.add(k); out.push(t); } };
+    (CONFIG.hashtags || []).forEach(add);
+    if(CONFIG.tagsFromCaption){ (captionFor(idx).match(/#[\p{L}\p{N}_]+/gu) || []).forEach(add); }
+    return out;
+  }
+  function descEl(el){
+    return el.tagName.toLowerCase() + '[role=' + (el.getAttribute('role') || '-') + ',ce=' + (el.getAttribute('contenteditable') || '-') +
+      ',ph=' + String(el.getAttribute('placeholder') || el.getAttribute('aria-label') || el.getAttribute('aria-placeholder') || '-').slice(0, 20) + ']';
+  }
+  function tagCandidates(dlg){
+    const out = [];
+    for(const scope of scopesFor(dlg)){
+      scope.querySelectorAll('input, textarea, [contenteditable="true"], [role="textbox"]').forEach(el => { if(isVis(el) && el.type !== 'file') out.push(descEl(el)); });
+    }
+    return out.slice(0, 6).join(' ; ') || '(tidak ada input kelihatan)';
+  }
+  function findTagsInput(dlg){
+    const re = /add tags|tambah(kan)? tag|add hashtags?|tambah(kan)? hashtag/i;
+    for(const scope of scopesFor(dlg)){
+      for(const el of scope.querySelectorAll('input, textarea, [contenteditable="true"], [role="textbox"]')){
+        if(!isVis(el) || el.type === 'file') continue;
+        const attr = [el.getAttribute('placeholder'), el.getAttribute('aria-label'), el.getAttribute('aria-placeholder'), el.getAttribute('data-placeholder')].join(' ');
+        if(re.test(attr)) return el;
+        // placeholder Lexical biasanya elemen terpisah: cek teks pendek di parent / parent-nya parent
+        const p1 = el.parentElement, p2 = p1 && p1.parentElement;
+        for(const p of [p1, p2]){
+          const t = p ? String(p.innerText || '').trim() : '';
+          if(t && t.length < 40 && re.test(t)) return el;
+        }
+      }
+    }
+    return null;
+  }
+  function pressEnterKey(el){
+    const init = { key:'Enter', code:'Enter', keyCode:13, which:13, bubbles:true, cancelable:true };
+    for(const t of ['keydown', 'keypress', 'keyup']){ try{ el.dispatchEvent(new KeyboardEvent(t, init)); }catch(e){} }
+  }
+  async function fillTags(el, tags){
+    addLog('🏷️ Isi tags: ' + tags.map(t => '#' + t).join(' ') + ' | ' + descEl(el));
+    const isInput = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA';
+    for(const t of tags){
+      if(!RUN) return false;
+      try{ el.focus(); }catch(e){}
+      await sleep(200);
+      if(isInput){
+        try{
+          const proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+          Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, t);
+        }catch(e){ el.value = t; }
+        el.dispatchEvent(new InputEvent('input', { bubbles:true, inputType:'insertText', data:t }));
+      } else {
+        try{ document.execCommand('insertText', false, t); }catch(e){}
+      }
+      await sleep(600);
+      pressEnterKey(el);
+      await sleep(600);
+    }
+    const left = String(isInput ? el.value : (el.innerText || '')).trim();
+    addLog('🏷️ Isi input tags setelah Enter: "' + left.slice(0, 40) + '"');
+    return true;
+  }
+  function descHit(e){
+    return e.tagName.toLowerCase() + '[role=' + (e.getAttribute('role') || '-') + ',lbl=' + normTxt(e.getAttribute('aria-label') || e.textContent).slice(0, 18) + ']';
+  }
+  function alertText(){
+    const t = [];
+    document.querySelectorAll('[role="alert"], [role="status"]').forEach(a => { if(isVis(a)){ const x = normTxt(a.innerText); if(x) t.push(x.slice(0, 80)); } });
+    return t.join(' | ') || '-';
+  }
+  function stepTitle(){
+    const t = allDialogs().map(d => String(d.innerText || '')).join('\n');
+    const m = t.match(/(create reel|edit reel|reel settings|reel options|buat reel|setelan reel)/i);
+    return m ? m[1] : '';
+  }
+  // Daftar tombol kelihatan di SEMUA dialog, format "indexDialog:label(off)". (off) = aria-disabled/disabled.
+  function btnLabels(){
+    const out = [];
+    allDialogs().forEach((d, di) => {
+      d.querySelectorAll('div[role="button"], button').forEach(b => {
+        if(!isVis(b)) return;
+        const l = normTxt(b.getAttribute('aria-label') || b.textContent).slice(0, 18);
+        if(!l) return;
+        const off = b.getAttribute('aria-disabled') === 'true' || b.disabled === true;
+        out.push(di + ':' + l + (off ? '(off)' : ''));
+      });
+    });
+    return out;
+  }
+  // Klik bertingkat: percobaan 0 = klik sintetis lengkap, 1 = native click(), 2 = click() di anak elemen,
+  // 3+ = fokus + tekan Enter/Spasi. Dipakai kalau klik sebelumnya tidak membuat langkah FB berpindah.
+  async function clickEscalate(el, attempt){
+    if(attempt <= 0) return await universalClick(el, { direct:true });
+    if(attempt === 1){ try{ el.click(); addLog('→ native click()'); }catch(e){ addLog('native click ERR: ' + e.message); } return true; }
+    if(attempt === 2){ const inner = el.querySelector('span, div') || el; try{ inner.click(); addLog('→ native click() di anak elemen'); }catch(e){} return true; }
+    try{ el.focus(); }catch(e){}
+    pressEnterKey(el);
+    try{ el.dispatchEvent(new KeyboardEvent('keydown', { key:' ', code:'Space', keyCode:32, which:32, bubbles:true, cancelable:true })); }catch(e){}
+    try{ el.dispatchEvent(new KeyboardEvent('keyup', { key:' ', code:'Space', keyCode:32, which:32, bubbles:true, cancelable:true })); }catch(e){}
+    addLog('→ fokus + Enter/Spasi');
+    return true;
+  }
+  function uploadBusy(dlg){
+    for(const scope of scopesFor(dlg)){
+      for(const pb of scope.querySelectorAll('[role="progressbar"]')){ if(isVis(pb)) return true; }
+      const t = String(scope.innerText || '').toLowerCase();
+      if(/(uploading|mengunggah|processing|memproses|sedang diproses)/.test(t)) return true;
+    }
+    return false;
+  }
+  function uploadFailed(){
+    const re = /(video upload failed|upload failed|can.?t be uploaded|couldn.?t be uploaded|gagal diunggah|gagal mengunggah|tidak dapat diunggah|tidak bisa diunggah)/i;
+    return allDialogs().some(d => re.test(String(d.innerText || '')));
+  }
+  function attachFile(inp, f){
+  const dt = new DataTransfer(); dt.items.add(f);
+  try{ inp.files = dt.files; }catch(e){}
+  const got = inp.files ? inp.files.length : 0;
+  addLog('📎 input.files ter-set: ' + got + ' file');
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+  inp.dispatchEvent(new Event('change', { bubbles: true }));
+  try{ inp.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste' })); }catch(e){}
+}
+  function dropFile(target, file){
+    if(!target) return;
+    const dt = new DataTransfer(); dt.items.add(file);
+    for(const t of ['dragenter','dragover','drop']){
+      try{ target.dispatchEvent(new DragEvent(t, { bubbles:true, cancelable:true, dataTransfer: dt })); }catch(e){}
+    }
+  }
+  // Snapshot kasar isi dialog: berubah kalau FB mulai memproses file (preview/progress/teks).
+  function mediaSnap(){
+    return allDialogs().reduce((n, d) =>
+      n + d.querySelectorAll('video, img[src^="blob:"], [role="progressbar"], canvas').length * 100000 + String(d.innerText || '').length, 0);
+  }
+  // v2.8: tanda NYATA FB menerima file (preview / progress / teks uploading), bukan sekadar teks dialog berubah.
+  function mediaStrong(){
+    for(const d of allDialogs()){
+      if(d.querySelector('video, img[src^="blob:"], canvas')) return true;
+      for(const pb of d.querySelectorAll('[role="progressbar"]')){ if(isVis(pb)) return true; }
+      if(/(uploading|mengunggah|processing|memproses|sedang diproses)/i.test(String(d.innerText || ''))) return true;
+    }
+    return false;
+  }
+  // v2.8: composer dianggap siap kalau tombol Photo/video DAN editor caption sudah ada.
+  function composerReady(d){
+    d = d || findComposerDialog();
+    return !!(d && findMediaButton(d) && findCaptionEditor(d));
+  }
+  function diag(){
+    const ds = allDialogs();
+    const inputs = Array.from(document.querySelectorAll('input[type="file"]'))
+      .map(i => (i.getAttribute('accept') || '-').slice(0, 24) + '#' + (i.files ? i.files.length : 0));
+    const pb = findPostButton(null);
+    const prog = ds.some(d => Array.from(d.querySelectorAll('[role="progressbar"]')).some(isVis));
+    const media = ds.reduce((n, d) => n + d.querySelectorAll('video, img[src^="blob:"]').length, 0);
+    const labels = btnLabels().slice(0, 16);
+    return 'dialog=' + ds.length + ' | step=' + (stepTitle() || '-') + ' | failed=' + uploadFailed() + ' | post=' + (pb ? (pb.disabled ? 'DISABLED' : 'ENABLED') : 'NONE') +
+      ' | progressbar=' + prog + ' | preview=' + media + ' | inputs=[' + inputs.join(',') + '] | btns=[' + labels.join(' / ') + ']';
+  }
+  async function closeComposer(){
+    const dlg = findComposerDialog();
+    if(!dlg) return;
+    const cb = dlg.querySelector('[aria-label="Close"], [aria-label="Tutup"]');
+    if(cb){ await universalClick(cb); await sleep(900); }
+    else { document.dispatchEvent(new KeyboardEvent('keydown', {bubbles:true, key:'Escape', keyCode:27})); await sleep(900); }
+    for(let i=0; i<6; i++){
+      const confirmBtn = Array.from(document.querySelectorAll('div[role="dialog"] div[role="button"], div[role="dialog"] button'))
+        .find(b => isVis(b) && /^(discard|discard post|buang|buang postingan|leave|tinggalkan)$/i.test((b.textContent||'').trim()));
+      if(confirmBtn){ await universalClick(confirmBtn); await sleep(900); break; }
+      await sleep(300);
+    }
+  }
+  async function waitFor(fn, timeoutMs, stepMs){
+    const t0 = Date.now(); stepMs = stepMs || 500;
+    while (Date.now() - t0 < timeoutMs){
+      if (!RUN) return null;
+      const v = fn();
+      if (v) return v;
+      await sleep(stepMs);
+    }
+    return null;
+  }
+
+  // ============ CAPTION (verifikasi, sama pola dgn JHON PLAYER) ============
+  function captionOk(editor, caption){
+    if(!editor) return false;
+    const exp = String(caption).split('\n').map(normTxt).filter(Boolean);
+    const got = String(editor.innerText || '').split('\n').map(normTxt).filter(Boolean);
+    if(got.length !== exp.length) return false;
+    for(let i=0; i<exp.length; i++){
+      if(got[i] !== exp[i] && got[i].indexOf(exp[i].slice(0, 20)) !== 0) return false;
+    }
+    return true;
+  }
+  function pasteInto(el, text){
+    try{
+      const dt = new DataTransfer(); dt.setData('text/plain', text);
+      el.focus();
+      el.dispatchEvent(new ClipboardEvent('paste', {clipboardData: dt, bubbles: true, cancelable: true}));
+      return true;
+    }catch(e){ return false; }
+  }
+  async function clearEditor(el){
+    el.focus(); await sleep(150);
+    try{ document.execCommand('selectAll', false, null); document.execCommand('delete', false, null); }catch(e){}
+    await sleep(250);
+  }
+  // FIX: pressEnter versi beforeinput (bukan keydown/keyup sintetis) supaya Draft.js/
+  // Lexical benar-benar bikin block baru, tidak dobel teks.
+  function pressEnter(el){
+    let handled = false;
+    try{
+      handled = !el.dispatchEvent(new InputEvent('beforeinput', {
+        bubbles:true, cancelable:true, composed:true, inputType:'insertParagraph', data:null
+      }));
+    }catch(e){ handled = false; }
+    if(!handled){ try{ document.execCommand('insertParagraph'); }catch(e){} }
+  }
+  async function typeParas(el, lines){
+    el.focus();
+    for(let i=0; i<lines.length; i++){
+      if(i > 0){ pressEnter(el); await sleep(150); }
+      if(lines[i]){ try{ document.execCommand('insertText', false, lines[i]); }catch(e){} await sleep(150); }
+    }
+  }
+  async function fillCaption(dlg, caption){
+    for(const st of ['paste', 'para']){
+      const ed = findCaptionEditor(dlg);
+      if(!ed){ addLog('⚠️ Editor caption tidak ketemu'); return false; }
+      await clearEditor(ed);
+      if(st === 'paste'){ if(!pasteInto(ed, caption)){ addLog('paste tidak didukung, lanjut'); continue; } await sleep(700); }
+      else { await typeParas(ed, caption.split('\n')); await sleep(500); }
+      const now = findCaptionEditor(dlg) || ed;
+      if(captionOk(now, caption)){ addLog('✅ Caption terisi & terverifikasi [' + st + ']'); return true; }
+      const got = String(now.innerText || '').split('\n').map(normTxt).filter(Boolean).length;
+      addLog('⚠️ Caption belum sesuai [' + st + ']: ' + got + '/' + caption.split('\n').filter(x => x.trim()).length + ' baris');
+    }
+    addLog('🔎 editor kandidat: ' + editorDiag(findComposerDialog() || dlg));
+    return false;
+  }
+
+  // ============ BUKA COMPOSER (pakai selector dari RECORDED_STEPS[0] + fallback teks) ============
+  // FIX: dulu cuma andalkan 1 selector statis [aria-label^="Write something"]. Kalau compose
+  // box belum ter-render (lazy-load, posisi scroll, atau FB pakai label/format beda) -> langsung
+  // gagal total. Sekarang ada fallback cari berdasarkan kata kunci umum di aria-label/teks,
+  // mirip findCreatePostBtn di script sebelumnya yang lebih robust.
+  const OPEN_LABEL_HINTS = /write something|tulis sesuatu|tulis postingan|tulis kiriman|write a post|mulai diskusi|start a discussion|create a post|create post|buat postingan|buat kiriman|apa yang (sedang )?(anda|kamu) pikirkan|what.?s on your mind/i;
+  // FIX v1.1: terbukti dari pengecekan live DOM, FB untuk compose box grup ini TIDAK pakai
+  // aria-label sama sekali (semua null) -- textContent persis "Write something..." ada
+  // langsung di sebuah div[role="button"]. Jadi fallback HARUS bisa nangkep itu meski
+  // aria-label kosong. Prioritas pencarian: (a) exact/near-exact text match di
+  // div[role="button"], baru (b) aria-label atau text mengandung kata kunci di elemen lain.
+  function findOpenBtn(sel){
+    // 1) coba selector asli dulu (RECORDED_STEPS[0], misal [aria-label^="Write something"])
+    let list = [];
+    try{ list = document.querySelectorAll(sel); }catch(e){ list = []; }
+    for(const b of list){ if(isVis(b)) return b; }
+
+    // 2) fallback prioritas tinggi: div[role="button"] dengan teks PERSIS/hampir persis
+    //    "Write something..." (atau varian bahasa lain) -- ini kasus nyata yang ketemu.
+    const roleButtons = document.querySelectorAll('div[role="button"]');
+    for(const el of roleButtons){
+      if(!isVis(el)) continue;
+      const t = (el.textContent || '').trim();
+      if(!OPEN_LABEL_HINTS.test(t)) continue;
+      if(t.length > 80) continue; // buang container besar yang teksnya kebetulan ngandung kata itu
+      const r = el.getBoundingClientRect();
+      if(r.width < 80 || r.height < 15) continue;
+      return el; // match persis begini biasanya cuma 1, langsung pakai
+    }
+
+    // 3) fallback umum: aria-label ATAU textContent elemen apa pun yang cocok kata kunci,
+    //    ambil yang area-nya paling kecil (paling spesifik, bukan container besar).
+    const all = document.querySelectorAll('[aria-label], div[role="button"], span, div');
+    let best = null, bestArea = Infinity;
+    for(const el of all){
+      if(!isVis(el)) continue;
+      const a = (el.getAttribute('aria-label') || '').trim();
+      const t = (el.textContent || '').trim();
+      if(!OPEN_LABEL_HINTS.test(a) && !(OPEN_LABEL_HINTS.test(t) && t.length <= 80)) continue;
+      const r = el.getBoundingClientRect();
+      if(r.width < 80 || r.height < 15) continue;
+      const area = r.width * r.height;
+      if(area < bestArea){ best = el; bestArea = area; }
+    }
+    return best;
+  }
+  async function openComposer(sel){
+    for(let attempt=1; attempt<=3; attempt++){
+      addLog('Open composer (try '+attempt+'/3)');
+      // FIX: scroll ke atas dulu -- compose box grup biasanya nempel di atas feed,
+      // kalau posisi scroll lagi di tengah, FB kadang belum render box itu di DOM.
+      try{ window.scrollTo({top:0, behavior:'instant'}); }catch(e){ try{ window.scrollTo(0,0); }catch(e2){} }
+      await sleep(600);
+      let btn = findOpenBtn(sel);
+      if(btn){ await universalClick(btn); }
+      else { addLog('❌ Tombol compose tidak ketemu (selector maupun fallback teks)'); }
+      let dlg = await waitFor(findComposerDialog, 8000, 500);
+      for(let retry=1; retry<=2 && !dlg; retry++){
+        if(!RUN) return null;
+        addLog('⚠️ Dialog belum muncul, klik ulang ('+retry+'/2)...');
+        const again = findOpenBtn(sel) || btn;
+        if(again) await universalClick(again);
+        dlg = await waitFor(findComposerDialog, 6000, 500);
+      }
+      if(dlg){ addLog('✅ Composer OK'); return dlg; }
+      addLog('⚠️ Retry buka composer...'); await sleep(1500);
+    }
+    addLog('❌ GAGAL buka composer. Compose box mungkin tidak ada/tersembunyi di halaman ini — cek manual.'); return null;
+  }
+
+  // ============ 1 POST = 1 VIDEO + 1 CAPTION ============
+  async function playOnePost(idx){
+    const caption = captionFor(idx);
+    const videoId = videoIdFor(idx);
+    addLog('=== POST ' + (idx+1) + '/' + POSTS.length + ' (video' + videoId + ') ===');
+
+    // 1) download video dulu SEBELUM buka composer (hemat waktu nunggu di FB)
+    let blob;
+    try{ blob = await fetchVideo(videoId); }
+    catch(e){ addLog('❌ Download video'+videoId+' gagal: '+e.message); return 'fail'; }
+    if(!RUN) return 'stopped';
+
+    // 2) CLICK — buka composer (step 1 dari RECORDED_STEPS)
+    const dlg = await openComposer(RECORDED_STEPS[0].selector);
+    if(!dlg) return 'fail';
+    await sleep(500);
+
+    // v3.1 FIX: `abort` dulu rusak -- "const abort = async (msg) =>" tanpa { } di baris sendiri
+    // bikin JS baca HANYA baris addLog('Attach video...') sebagai ISI FUNGSI (arrow function
+    // expression-body), jadi `msg` (pesan error asli) diabaikan, closeComposer() tidak pernah
+    // jalan, dan return 'fail' tidak pernah tercapai. Semua kode attach di bawahnya lalu jalan
+    // sebagai statement BIASA di luar abort (makanya attach tetap jalan), tapi tiap kali
+    // abort(...) dipanggil nanti, yg ke-log cuma "Attach video..." berulang (lihat laporan log:
+    // itu muncul persis sebelum "Post #1 GAGAL") dan composer dibiarkan nyangkut terbuka.
+    const abort = async (msg) => { addLog('❌ ' + msg); await closeComposer(); return 'fail'; };
+
+    // 3) Attach video (v3.0 — fix Grup: 2 dialog, drop target benar)
+    addLog('Attach video...');
+    await sleep(800);
+if(!RUN){ await closeComposer(); return 'stopped'; }
+
+// cari input video (scan semua dialog)
+let videoInp = findVideoInput(findComposerDialog() || dlg);
+addLog('📎 Video input: ' + (videoInp ? 'FOUND' : 'NOT FOUND'));
+
+// klik tombol Photo/video buat aktivasi
+const mbBtn = findMediaButton(findComposerDialog() || dlg);
+if(mbBtn){
+  addLog('🖱️ Klik tombol Foto/video...');
+  await universalClick(mbBtn);
+  await sleep(1500);
+  videoInp = findVideoInput(findComposerDialog() || dlg) || videoInp;
+}
+
+const file = new File([blob], 'video' + videoId + '.mp4', { type: 'video/mp4' });
+const mb1 = Math.round(file.size/1024/1024*10)/10;
+let started = false, usedMode = '';
+
+// --- COBA 1: INPUT mode (set input.files) ---
+if(videoInp){
+  addLog('📎 Mode INPUT (' + mb1 + ' MB)...');
+  try{
+    const dt = new DataTransfer(); dt.items.add(file);
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'files').set;
+    setter.call(videoInp, dt.files);
+  }catch(e){
+    try{ const dt2 = new DataTransfer(); dt2.items.add(file); videoInp.files = dt2.files; }catch(e2){}
+  }
+  videoInp.dispatchEvent(new Event('input', { bubbles: true }));
+  videoInp.dispatchEvent(new Event('change', { bubbles: true }));
+  try{ videoInp.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste' })); }catch(e){}
+  const got = videoInp.files ? videoInp.files.length : 0;
+  addLog('📎 input.files = ' + got);
+  started = await waitFor(() => mediaStrong() || uploadFailed(), 12000, 500);
+  usedMode = 'input';
+}
+
+// --- COBA 2: DROP ke berbagai target ---
+if(!started && RUN){
+  const dialogRoot = findComposerDialog() || dlg;
+  const targets = [];
+  if(videoInp && videoInp.parentElement) targets.push({ n: 'input-parent', e: videoInp.parentElement });
+  let p = videoInp && videoInp.parentElement;
+  for(let i=0;i<4 && p;i++){ p = p.parentElement; if(p) targets.push({ n: 'ancestor-' + (i+2), e: p }); }
+  if(dialogRoot) targets.push({ n: 'dialog-root', e: dialogRoot });
+
+  for(const t of targets){
+    if(!RUN) break;
+    addLog('📎 Drop ke ' + t.n + ' (' + mb1 + ' MB)...');
+    dropFile(t.e, file);
+    usedMode = 'drop:' + t.n;
+    started = await waitFor(() => mediaStrong() || uploadFailed(), 8000, 500);
+    if(started){ addLog('✅ Drop ke ' + t.n + ' berhasil'); break; }
+    addLog('⚠️ Drop ke ' + t.n + ' tidak reaksi');
+  }
+}
+
+if(!RUN){ await closeComposer(); return 'stopped'; }
+if(uploadFailed()){ addLog('🔎 ' + diag()); return await abort('FB menolak upload (mode=' + usedMode + ')'); }
+if(!started) return await abort('Video tidak diterima FB (sudah coba input + multi-drop)');
+addLog('✅ FB menerima file, upload dimulai (mode=' + usedMode + ')');
+
+    // 4) Tunggu upload video selesai di FB
+    addLog('Nunggu upload selesai...');
+    let uploadDone = false, stable = 0, activeFor = 0, nextClicks = 0, capEarly = false;
+    let lastNextAt = 0, tagsDone = false, tagsMissLogged = false, lastSig = '', sameStepClicks = 0, lastStepName = null, prevLabs = [], editLogged = false, dumped = false;
+    const tags = tagsFor(idx);
+    for(let i=0; i<CONFIG.maxWaitUpload; i++){
+      if(!RUN){ await closeComposer(); return 'stopped'; }
+      await sleepRaw(1000);
+      if(uploadFailed()){ addLog('🔎 ' + diag()); return await abort('FB: "Video upload failed" saat menunggu upload (' + i + 's). Coba attachMode lain / cek format video.'); }
+      const d = findComposerDialog() || dlg;
+      const pb = findPostButton(d);
+      if(pb && !pb.disabled){
+        stable++; activeFor++;
+        if(stable >= 3 && (!uploadBusy(d) || activeFor > 45)){ uploadDone = true; addLog('✅ Upload selesai ('+i+'s)'); break; }
+      } else {
+        stable = 0; activeFor = 0;
+        // v2.4: hitungan eskalasi cuma di-reset kalau NAMA LANGKAH berubah (dulu: tiap daftar tombol berubah
+        // sedikit -> reset terus -> eskalasi tidak pernah jalan). Perubahan tombol dicatat sebagai selisih.
+        const stepNow = stepTitle();
+        if(stepNow !== lastStepName){ lastStepName = stepNow; sameStepClicks = 0; }
+        const labs = btnLabels();
+        const sigNow = stepNow + '#' + labs.join(',');
+        if(sigNow !== lastSig){
+          const added = labs.filter(x => !prevLabs.includes(x)), removed = prevLabs.filter(x => !labs.includes(x));
+          lastSig = sigNow; prevLabs = labs;
+          addLog('📍 step=' + (stepNow || '-') + ' | +[' + added.slice(0, 10).join(' / ') + '] -[' + removed.slice(0, 10).join(' / ') + ']');
+        }
+        if(/edit reel/i.test(stepNow) && !editLogged){
+          editLogged = true;
+          addLog('🏷️ Input di langkah Edit reel: ' + tagCandidates(d) + ' | cocok "Add tags": ' + (findTagsInput(d) ? 'YA' : 'TIDAK') + ' | tags terisi: ' + (tags.length ? tags.map(t => '#' + t).join(' ') : '(kosong — isi CONFIG.hashtags)'));
+        }
+        if(nextClicks < CONFIG.maxNextClicks && i >= 5 && Date.now() - lastNextAt >= CONFIG.nextCooldownMs){
+          let nb = findNextButton(d);
+          if(nb){
+            if(!tagsDone && tags.length){
+              const ti = findTagsInput(d);
+              if(ti){ tagsDone = await fillTags(ti, tags); await sleep(500); nb = findNextButton(findComposerDialog() || d) || nb; }
+              else if(!tagsMissLogged){ tagsMissLogged = true; addLog('ℹ️ Input tags belum ada di langkah ini | ' + tagCandidates(d)); }
+            }
+            nextClicks++; lastNextAt = Date.now();
+            const r = nb.getBoundingClientRect();
+            addLog('➡️ Klik "' + normTxt(nb.textContent) + '" (' + nextClicks + '/' + CONFIG.maxNextClicks + ', percobaan di langkah ini: ' + (sameStepClicks + 1) + ') | ' + descEl(nb) + ' @' + Math.round(r.left) + ',' + Math.round(r.top) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
+            const stepBefore = stepTitle();
+            await clickEscalate(nb, sameStepClicks);
+            sameStepClicks++;
+            // cek apakah klik itu benar-benar memindahkan langkah (atau memunculkan tombol Post)
+            const moved = await waitFor(() => stepTitle() !== stepBefore || !!findPostButton(findComposerDialog() || d), 3000, 500);
+            if(!moved){
+              addLog('⚠️ Next tidak memindahkan langkah (3s) | alert=' + alertText());
+              if(sameStepClicks >= 2 && !dumped){
+                dumped = true;
+                addLog('🔎 teks dialog: ' + normTxt(allDialogs().map(x => x.innerText).join(' ')).slice(0, 300));
+              }
+            } else addLog('✅ Langkah berpindah -> ' + (stepTitle() || '-'));
+          }
+        }
+        if(i === 20 && pb && pb.disabled && caption && !capEarly){
+          addLog('Post masih disabled di 20s, coba isi caption lebih dulu...');
+          capEarly = await fillCaption(findComposerDialog() || dlg, caption);
+        }
+      }
+      if(i % 10 === 0 && i > 0) addLog('... masih upload ('+i+'s) | ' + diag());
+    }
+    if(!uploadDone){ addLog('🔎 saat timeout: ' + diag()); return await abort('Upload timeout, dibatalkan'); }
+    await sleep(500);
+
+    // 5) TYPE — isi caption (step 2 dari RECORDED_STEPS, teks dari Excel/POSTS)
+    if(caption && !capEarly){
+      addLog('Isi caption...');
+      const okCap = await fillCaption(findComposerDialog() || dlg, caption);
+      if(!okCap && CONFIG.requireCaptionOk) return await abort('Caption gagal terverifikasi. Post BELUM diklik.');
+      if(!okCap) addLog('⚠️ Caption tidak terverifikasi, lanjut posting (requireCaptionOk=false)');
+      await sleep(300);
+    }
+
+    if(!RUN){ await closeComposer(); return 'stopped'; }
+
+    // 6) CLICK — POST_BUTTON_REAL (step 3 dari RECORDED_STEPS)
+    addLog('Klik tombol Post...');
+    const finalBtn = await waitFor(() => { const b = findPostButton(findComposerDialog() || dlg); return (b && !b.disabled) ? b : null; }, 6000, 500);
+    if(!finalBtn) return await abort('Tombol Post tidak ketemu/disabled');
+
+    // v2.8 FIX: dulu "sukses" dicek dgn !findComposerDialog() -- itu cuma lihat ADA/TIDAK dialog
+    // apa pun di halaman. Setelah Post sukses, FB kadang langsung membuka lagi "Create post" KOSONG
+    // (dialog baru, bukan sisa yang lama) -- itu bikin findComposerDialog() selalu return sesuatu
+    // dan status dianggap "tidak terkonfirmasi" PADAHAL video sudah ikut terposting (lihat screenshot
+    // laporan: video sudah ada di feed "Just now", tapi dialog kosong baru menutupi semuanya).
+    // Sekarang: pegang elemen dialog composer YANG DIPAKAI POST INI (dlgRef), sukses = elemen
+    // itu sendiri sudah lepas dari DOM/tidak kelihatan lagi -- dialog lain yang baru muncul
+    // tidak dihitung. Dialog kosong yang nyasar itu lalu ditutup otomatis (bukan penanda gagal).
+    const dlgRef = findComposerDialog() || dlg;
+    PROG.pending = idx; saveProg(); // tandai sedang dikirim SEBELUM klik (anti dobel kalau terputus)
+    await universalClick(finalBtn.el, { direct: !!stepTitle() });
+    addLog('📨 Post diklik, menunggu konfirmasi dialog tertutup...');
+
+    const ourDlgGone = () => !document.contains(dlgRef) || !isVis(dlgRef);
+    const closed = await waitFor(ourDlgGone, 60000, 1000);
+    PROG.pending = null;
+    if(closed){
+      addLog('✅ Dialog tertutup, sukses!');
+      // bersihkan dialog "Create post" kosong lain yg nyasar/auto-muncul, kalau ada (tidak mempengaruhi hasil)
+      const stray = findComposerDialog();
+      if(stray && stray !== dlgRef && !findPostButton(stray)){ addLog('🧹 Nutup dialog composer kosong yang nyasar...'); await closeComposer(); }
+      return 'ok';
+    }
+    addLog('⚠️ Dialog tidak tertutup. Status TIDAK TERKONFIRMASI — cek manual di grup.');
+    return 'unsure';
+  }
+
+  // ============ UI ============
+  function buildDebugText(){
+    return '=== JHON FB VIDEO+STEPS v2.7·gen ===\n' +
+      'URL: ' + location.href + '\nTarget: ' + CUR_KEY + '\n' +
+      'Post: ' + (IDX+1) + '/' + POSTS.length + ' sukses=' + sentCount() + ' startFrom=' + CONFIG.startFrom + '\n\n' +
+      '=== LOG ===\n' + LOGS.join('\n') + '\n\n' +
+      '=== STEPS ===\n' + JSON.stringify(RECORDED_STEPS, null, 2);
+  }
+  function copyLog(){
+    const txt = buildDebugText();
+    const fallback = () => { try{ window.prompt('Copy manual:', txt); }catch(e){} };
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(() => alert('✅ Log tercopy!')).catch(fallback);
+      } else fallback();
+    }catch(e){ fallback(); }
+  }
+
+  function makeUI(){
+    if(UI_CLOSED || !document.body) return;
+    if(document.getElementById('jhon-vs')) return;
+    const d = document.createElement('div');
+    d.id = 'jhon-vs';
+    d.style.cssText = 'position:fixed;right:12px;top:calc(12px + env(safe-area-inset-top,0px));z-index:2147483647;background:#141414;border:2px solid #22c55e;border-radius:12px;width:min(94vw,390px);color:#fff;font-family:system-ui;box-shadow:0 4px 20px rgba(0,0,0,.6);max-height:70vh;display:flex;flex-direction:column;pointer-events:auto';
+    d.innerHTML =
+      '<div id="jhon-vs-head" style="padding:10px;background:#16a34a;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;flex:0 0 auto"><b style="font-size:15px">🎬 VIDEO+STEPS v2.7·gen</b><span style="display:flex;align-items:center;gap:8px"><span id="jhon-vs-count" style="font-size:16px;font-weight:800">'+sentCount()+'/'+POSTS.length+'</span><button id="jhon-vs-min" title="Minimize" style="background:rgba(0,0,0,.25);color:#fff;border:0;border-radius:6px;width:26px;height:26px;font-size:14px;cursor:pointer;line-height:1">—</button></span></div>'+
+      '<div id="jhon-vs-body" style="padding:10px;overflow:auto">'+
+        '<div style="font-size:12px;color:#aaa;margin-bottom:6px;word-break:break-all" id="jhon-vs-target">Target: '+esc(CUR_KEY)+'</div>'+
+        '<div style="text-align:center;background:#0b0b0b;border:2px solid #FFD60A;border-radius:12px;padding:8px 6px;margin-bottom:10px">'+
+          '<div id="jhon-vs-numlbl" style="font-size:12px;color:#aaa;letter-spacing:1px">URUTAN UPLOAD</div>'+
+          '<div id="jhon-vs-num" style="font-size:38px;font-weight:900;color:#FFD60A;line-height:1.1;font-variant-numeric:tabular-nums">--</div>'+
+          '<div id="jhon-vs-numsub" style="font-size:12px;color:#86efac"></div>'+
+        '</div>'+
+        '<button id="jhon-vs-play" style="width:100%;padding:16px;font-size:17px;background:linear-gradient(135deg,#16a34a,#0ea5e9);color:#fff;border:0;border-radius:10px;font-weight:800;cursor:pointer">▶ MULAI</button>'+
+        '<div style="display:flex;gap:6px;margin-top:6px">'+
+          '<button id="jhon-vs-stop" style="display:none;flex:1;padding:12px;font-size:14px;background:#7f1d1d;color:#fff;border:0;border-radius:6px;cursor:pointer">STOP</button>'+
+          '<button id="jhon-vs-copy" style="flex:1;padding:12px;font-size:14px;background:#7c3aed;color:#fff;border:0;border-radius:6px;cursor:pointer">📋 LOG</button>'+
+          '<button id="jhon-vs-reset" style="padding:12px;font-size:14px;background:#222;color:#fca5a5;border:1px solid #333;border-radius:6px;cursor:pointer">RESET</button>'+
+          '<button id="jhon-vs-close" style="padding:12px 14px;font-size:14px;background:#222;color:#fff;border:1px solid #333;border-radius:6px;cursor:pointer">X</button>'+
+        '</div>'+
+        '<div id="jhon-vs-stat" style="font-size:14px;font-weight:600;color:#86efac;margin-top:10px;text-align:center">Siap</div>'+
+        '<div id="jhon-vs-logs" style="font-size:11px;color:#8b93b8;margin-top:8px;max-height:200px;overflow:auto;background:#000;padding:6px;border-radius:6px;font-family:monospace;line-height:1.4">— log —</div>'+
+      '</div>';
+    document.body.appendChild(d);
+
+    const playBtn = d.querySelector('#jhon-vs-play'), stopBtn = d.querySelector('#jhon-vs-stop'), stat = d.querySelector('#jhon-vs-stat'), countEl = d.querySelector('#jhon-vs-count');
+    const numEl = d.querySelector('#jhon-vs-num'), numLbl = d.querySelector('#jhon-vs-numlbl'), numSub = d.querySelector('#jhon-vs-numsub');
+    const pad2 = n => String(n).padStart(Math.max(2, CONFIG.videoIdPad), '0');
+    function refreshNum(){
+      const total = POSTS.length;
+      if(IDX >= total || sentCount() >= total){ numLbl.textContent = 'SELESAI'; numEl.textContent = pad2(total) + ' / ' + pad2(total); numSub.textContent = ''; return; }
+      numLbl.textContent = RUN ? '⏫ SEDANG UPLOAD' : 'BERIKUTNYA';
+      numEl.textContent = pad2(IDX + 1) + ' / ' + pad2(total);
+      numSub.textContent = 'video' + videoIdFor(IDX) + '.mp4';
+    }
+    function refreshCount(){ countEl.textContent = sentCount()+'/'+POSTS.length; refreshNum(); }
+    const headEl = d.querySelector('#jhon-vs-head'), bodyEl = d.querySelector('#jhon-vs-body'), minBtn = d.querySelector('#jhon-vs-min');
+    let minimized = false;
+    function setMin(v){
+      minimized = v;
+      bodyEl.style.display = v ? 'none' : 'block';
+      minBtn.textContent = v ? '▢' : '—';
+      minBtn.title = v ? 'Buka' : 'Minimize';
+      d.style.width = v ? 'auto' : 'min(94vw,390px)';
+    }
+    minBtn.onclick = (e) => { e.stopPropagation(); setMin(!minimized); };
+    // v2.8: drag panel dari header. Klik tanpa gerak (<6px) tetap toggle minimize; geser >=6px = drag, tidak toggle.
+    (function makeDraggable(){
+      let dragging = false, moved = false, startX = 0, startY = 0, baseLeft = 0, baseTop = 0;
+      const clampPos = (left, top) => {
+        const w = d.offsetWidth, h = d.offsetHeight;
+        const maxLeft = Math.max(0, window.innerWidth - w), maxTop = Math.max(0, window.innerHeight - h);
+        return { left: Math.min(Math.max(0, left), maxLeft), top: Math.min(Math.max(0, top), maxTop) };
+      };
+      const onDown = (e) => {
+        if(e.target === minBtn) return;
+        const p = e.touches ? e.touches[0] : e;
+        dragging = true; moved = false;
+        startX = p.clientX; startY = p.clientY;
+        const r = d.getBoundingClientRect();
+        baseLeft = r.left; baseTop = r.top;
+        d.style.right = 'auto'; d.style.bottom = 'auto';
+        d.style.left = baseLeft + 'px'; d.style.top = baseTop + 'px';
+        if(e.type === 'mousedown') e.preventDefault();
+      };
+      const onMove = (e) => {
+        if(!dragging) return;
+        const p = e.touches ? e.touches[0] : e;
+        const dx = p.clientX - startX, dy = p.clientY - startY;
+        if(Math.abs(dx) >= 6 || Math.abs(dy) >= 6) moved = true;
+        const pos = clampPos(baseLeft + dx, baseTop + dy);
+        d.style.left = pos.left + 'px'; d.style.top = pos.top + 'px';
+        if(e.type === 'touchmove' && moved) e.preventDefault();
+      };
+      const onUp = () => {
+        if(!dragging) return;
+        dragging = false;
+        if(!moved) setMin(!minimized); // klik biasa (tanpa drag) = toggle minimize
+      };
+      headEl.style.touchAction = 'none';
+      headEl.addEventListener('mousedown', onDown);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+      headEl.addEventListener('touchstart', onDown, { passive: true });
+      window.addEventListener('touchmove', onMove, { passive: false });
+      window.addEventListener('touchend', onUp);
+    })();
+    d.querySelector('#jhon-vs-close').onclick = () => { RUN=false; PROG.autorun=false; saveProg(); UI_CLOSED=true; d.remove(); };
+    d.querySelector('#jhon-vs-copy').onclick = copyLog;
+    d.querySelector('#jhon-vs-reset').onclick = () => {
+      if(RUN){ alert('STOP dulu sebelum reset.'); return; }
+      if(!confirm('Reset progress? Semua post dianggap BELUM terkirim (bisa dobel kalau sebenarnya sudah terkirim). Lanjut?')) return;
+      PROG = { idx:0, sent:{}, tries:{}, pending:null, autorun:false }; IDX = 0; saveProg(); refreshCount();
+      stat.textContent = 'Reset'; addLog('🔄 Reset progress');
+    };
+    stopBtn.onclick = () => { RUN=false; PROG.autorun=false; saveProg(); playBtn.style.display='block'; stopBtn.style.display='none'; stat.textContent='Stopped'; refreshNum(); };
+    async function countdown(sec, label){
+      for(let i=sec; i>0 && RUN; i--){ stat.textContent = label + ' ' + i + 's'; await sleepRaw(1000); }
+    }
+    async function refreshToTarget(){
+      saveProg();
+      addLog('🔄 Refresh halaman, lalu lanjut otomatis...');
+      await sleep(300);
+      const url = CONFIG.targetUrl || PROG.targetUrl || location.href.split('#')[0];
+      const here = location.href.split('#')[0];
+      try{
+        if(here === url || here === url + '/' || here + '/' === url) location.reload();
+        else location.assign(url);
+      }catch(e){ try{ location.reload(); }catch(e2){} }
+      await sleep(3000); // kalau halaman benar-benar pindah, kode di bawah ini tidak akan jalan lagi
+      addLog('⚠️ Refresh tidak terjadi, refresh manual lalu klik MULAI LAGI.');
+      PROG.autorun = false; saveProg();
+    }
+    playBtn.onclick = async () => {
+      if(RUN) return;
+      if(!CONFIG.targetUrl){
+        const k = curTargetKey();
+        if(k !== CUR_KEY){
+          CUR_KEY = k; PKEY = progKeyFor(k); loadProgState(); refreshCount();
+          const tg = d.querySelector('#jhon-vs-target'); if(tg) tg.textContent = 'Target: ' + k;
+          addLog('🎯 Target: ' + k + ' (progress dipisah per target)');
+        }
+      }
+      if(sentCount() >= POSTS.length){ PROG.autorun=false; saveProg(); addLog('✅ Semua post sudah terkirim. Klik RESET kalau mau ulang.'); return; }
+      RUN = true; PROG.autorun = true; PROG.targetUrl = CONFIG.targetUrl || location.href.split('#')[0]; saveProg();
+      playBtn.style.display='none'; stopBtn.style.display='block';
+      addLog('▶ MULAI ' + POSTS.length + ' post (sudah terkirim/dilewati: ' + sentCount() + ')');
+      while(RUN && IDX < POSTS.length){
+        if(PROG.sent[IDX]){ addLog('⏭ Skip #'+(IDX+1)+' (sudah terkirim/dilewati)'); IDX++; saveProg(); continue; }
+        stat.textContent = 'Proses: post '+(IDX+1)+'/'+POSTS.length; refreshNum();
+        const res = await playOnePost(IDX);
+        PROG.pending = null;
+        if(res === 'stopped'){ PROG.autorun=false; saveProg(); addLog('⏹ Dihentikan sebelum Post diklik. Akan diulang saat MULAI lagi.'); break; }
+        if(res === 'ok'){ PROG.sent[IDX] = 1; PROG.tries[IDX] = 0; }
+        else if(res === 'unsure'){ PROG.sent[IDX] = 2; addLog('⚠️ Post #'+(IDX+1)+' tidak terkonfirmasi. TIDAK akan diulang otomatis. Cek manual.'); }
+        else {
+          const n = (PROG.tries[IDX] = (PROG.tries[IDX] || 0) + 1);
+          saveProg(); refreshCount();
+          if(n >= CONFIG.maxTries){ addLog('❌ Post #'+(IDX+1)+' gagal '+n+'x sebelum diklik. Berhenti — cek manual.'); PROG.autorun=false; saveProg(); break; }
+          addLog('⚠️ Post #'+(IDX+1)+' GAGAL (percobaan '+n+'/'+CONFIG.maxTries+'), refresh lalu ulangi...');
+          await countdown(5, 'refresh');
+          if(RUN) await refreshToTarget();
+          break;
+        }
+        IDX++; saveProg(); refreshCount();
+        if(IDX >= POSTS.length){ PROG.autorun=false; saveProg(); stat.textContent = 'Selesai'; addLog('🎉 ALL DONE'); break; }
+        const wait = Math.round(CONFIG.delayBetween * (0.85 + Math.random()*0.3));
+        addLog('⏳ Tunggu ' + wait + 's (video diproses FB), lalu refresh & lanjut post berikutnya');
+        await countdown(wait, 'next');
+        if(RUN) await refreshToTarget();
+        break;
+      }
+      RUN = false; playBtn.style.display='block'; stopBtn.style.display='none'; playBtn.textContent='▶ MULAI LAGI';
+      refreshCount();
+    };
+    refreshCount();
+    if(START_SKIPPED > 0) addLog('⏭ startFrom=' + CONFIG.startFrom + ': ' + START_SKIPPED + ' post awal ditandai dilewati, mulai dari video' + videoIdFor(IDX));
+    // Lanjut otomatis setelah refresh (hanya di halaman grup target, dan kalau sesi masih baru)
+    if(PENDING_RECOVERED !== null) addLog('⚠️ Post #'+(PENDING_RECOVERED+1)+' terputus saat dikirim; ditandai tidak terkonfirmasi (cek manual), TIDAK diulang.');
+    if(PROG.autorun && !AUTO_TRIED && sentCount() < POSTS.length){
+      AUTO_TRIED = true;
+      if(Date.now() - (PROG.ts || 0) > 15*60*1000){ addLog('ℹ️ Auto-lanjut dilewati: sesi terakhir sudah lama (>15 menit). Klik MULAI manual.'); PROG.autorun=false; saveProg(); }
+      else {
+        stat.textContent = 'Lanjut otomatis...';
+        setTimeout(() => { if(!RUN && !UI_CLOSED){ addLog('🔁 Lanjut otomatis setelah refresh (post '+(IDX+1)+'/'+POSTS.length+')'); playBtn.click(); } }, 1000);
+      }
+    }
+  }
+  function ensureUI(){ try{ makeUI(); }catch(e){ console.error('[JHON VS] UI error', e); } }
+  ensureUI();
+  [300,800,1500,3000,5000].forEach(t=>setTimeout(ensureUI,t));
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', ensureUI);
+  window.addEventListener('load', ensureUI);
+  setInterval(ensureUI, 3000);
+  addLog('UserScript v2.7 loaded. ' + POSTS.length + ' post, video id pattern: 01,02,... (pad='+CONFIG.videoIdPad+')');
+  console.log('[JHON VIDEO+STEPS v2.7·gen] Loaded');
+})();
+</script>
+</body>
+</html>
